@@ -4,7 +4,7 @@ SRC=${DIR}/src
 LIB=${DIR}/lib
 PROTO=$(DIR)/proto
 
-INCLUDE=  -I/usr/local/include/librdkafka \
+INCLUDE=  -I./lib/librdkafka/include/librdkafka \
 		  -I./lib/glog/include \
 		  -I./lib/jsoncpp/include \
 		  -I./lib/curl/include \
@@ -12,7 +12,7 @@ INCLUDE=  -I/usr/local/include/librdkafka \
 		  -I./proto \
 		  -I/usr/local/qconf/include
 
-LDFLAGS=  -L/usr/local/lib -lrdkafka \
+LDFLAGS=  -L./lib/librdkafka/lib -lrdkafka \
 		  -L./lib/glog/lib -lglog -Wl,-rpath,./lib/glog/lib \
 		  -L./lib/jsoncpp/lib -ljsoncpp \
 		  -L./lib/curl/lib -lcurl \
