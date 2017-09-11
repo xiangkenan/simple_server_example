@@ -18,32 +18,36 @@ class Redis {
         reply_ = NULL;
     }
     ~Redis() {
-        if(connect_ != NULL)
+        if (connect_ != NULL) {
             redisFree(connect_);
+        }
 
         connect_ = NULL;
         reply_ = NULL;
     }
 
     bool Connect(const std::string& host, const int port, const std::string& passwd = "") {
-        struct timeval tv = {0, 100000};
-        connect_ = redisConnectWithTimeout(host.c_str(), port, tv);
-        if (connect_ != NULL && connect_->err) {
-            LOG(ERROR) << "redis " << host << ":" << port << " connect error: " << connect_->errstr;
-            return false;
-        }
-
-        if (!passwd.empty()) {
-            reply_ = (redisReply*) redisCommand(connect_, "AUTH %s", passwd.c_str());
-            bool error = (reply_->type == REDIS_REPLY_ERROR);
-            freeReplyObject(reply_);
-            if (error) {
-                LOG(ERROR) << "redis " << host << ":" << port << " auth failed";
-                return false;
+        struct timeval tv = {0, 50000};
+        for (int retry = 0; retry < 3; ++retry) {
+            connect_ = redisConnectWithTimeout(host.c_str(), port, tv);
+            if (connect_ == NULL || connect_->err) {
+                continue;
             }
-        }
 
-        return true;
+            if (!passwd.empty()) {
+                reply_ = (redisReply*) redisCommand(connect_, "AUTH %s", passwd.c_str());
+                bool error = (reply_->type == REDIS_REPLY_ERROR);
+                freeReplyObject(reply_);
+                if (error) {
+                    LOG(ERROR) << "redis " << host << ":" << port << " auth failed";
+                    return false;
+                }
+            }
+            return true;
+        }
+        LOG(ERROR) << "redis " << host << ":" << port << " connect error: " << connect_->errstr;
+        return false;
+
     }
 
     bool Expire(const std::string &key, const int time) {
