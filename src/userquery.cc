@@ -39,11 +39,15 @@ bool UserQuery::FreshTriggerConfig() {
         return false;
     }
 
-    string base_value;
     redis_user_trigger_config.Get("base_config", &base_value);
     cout << base_value << endl;
 
+    parse_config();
     return true;
+}
+
+void UserQuery::parse_config() {
+    return;
 }
 
 bool UserQuery::Init() {

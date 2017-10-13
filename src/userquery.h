@@ -5,6 +5,7 @@
 #include <string>
 #include <glog/logging.h>
 #include <time.h>
+#include<jsoncpp/jsoncpp.h>
 
 #include "redis.h"
 
@@ -16,6 +17,7 @@ class UserQuery{
         bool Run(std::string behaver_message);
     private:
         bool Parse(std::string behaver_message);
+        void parse_config();
         bool FreshTriggerConfig();
         void Split(const std::string& s,
                 const std::string& delim,
@@ -38,6 +40,8 @@ class UserQuery{
 
         int pre_trigger_config_min;
         int cur_trigger_config_min;
+
+        std::string base_value; //基数 资源表
 };
 
 #endif
