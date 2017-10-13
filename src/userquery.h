@@ -4,17 +4,19 @@
 #include <iostream>
 #include <string>
 #include <glog/logging.h>
+#include <time.h>
 
 #include "redis.h"
 
 class UserQuery{
     public:
-        UserQuery() {};
+        UserQuery();
         ~UserQuery() {};
-        bool Init(std::string behaver_message);
+        bool Init();
+        bool Run(std::string behaver_message);
     private:
-        bool InitRedis();
         bool Parse(std::string behaver_message);
+        bool FreshTriggerConfig();
         void Split(const std::string& s,
                 const std::string& delim,
                 std::vector<std::string>* ret) {
@@ -31,8 +33,11 @@ class UserQuery{
         }
 
         Redis *redis_userid;
+        Redis *redis_user_trigger_config;
         std::string uid;
 
+        int pre_trigger_config_min;
+        int cur_trigger_config_min;
 };
 
 #endif

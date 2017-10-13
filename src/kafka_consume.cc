@@ -15,6 +15,12 @@ kafka_consumer_client::kafka_consumer_client(){}
 kafka_consumer_client::~kafka_consumer_client(){}
 
 bool kafka_consumer_client::initClient(){
+    user_query = new UserQuery();
+    if(!user_query->Init()) {
+        fprintf(stderr, "redis init error\n");
+        return false;
+    }
+
     RdKafka::Conf *conf = nullptr;
     conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
     if(!conf){
@@ -81,7 +87,7 @@ bool kafka_consumer_client::initClient(){
 }
 
 void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
-    UserQuery user_query;
+    //UserQuery user_query;
     string behaver_message;
 
     switch(message->err()){
@@ -94,7 +100,7 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
             //        static_cast<const char*>(message->payload()));
  //           len = static_cast<int>(message->len());
             behaver_message = static_cast<const char*>(message->payload());
-            user_query.Init(behaver_message);
+            user_query->Run(behaver_message);
             last_offset_ = message->offset();
             break;
         case RdKafka::ERR__PARTITION_EOF:

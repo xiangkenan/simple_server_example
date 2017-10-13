@@ -37,6 +37,7 @@ class kafka_consumer_client{
         RdKafka::Topic *topic_          = nullptr;
         int64_t offset_          = RdKafka::Topic::OFFSET_BEGINNING;
         int32_t partition_ = 0;
+        UserQuery *user_query;
 };
 
 #endif

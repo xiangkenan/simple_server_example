@@ -9,9 +9,12 @@
 
 class Redis {
   public:
-    Redis(){}
+    Redis() {
+        connect_ = NULL;
+    }
     ~Redis() {
-        redisFree(connect_);
+        if(connect_ != NULL)
+           redisFree(connect_);
 
         connect_ = NULL;
     }

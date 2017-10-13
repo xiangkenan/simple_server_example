@@ -2,21 +2,51 @@
 
 using namespace std;
 
-bool UserQuery::Init(string behaver_message) {
+UserQuery::UserQuery() {
+    pre_trigger_config_min = 0;
+    cur_trigger_config_min = 0;
+}
 
-    if (InitRedis() == false) {
-        return false;
-    }
+bool UserQuery::Run(string behaver_message) {
+
+    FreshTriggerConfig();
 
     if(!Parse(behaver_message)) {
         return false;
     }
 
-    cout << uid << endl;
     return true;
 }
 
-bool UserQuery::InitRedis() {
+bool UserQuery::FreshTriggerConfig() {
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+
+    cur_trigger_config_min = p->tm_min;
+
+    if (cur_trigger_config_min == pre_trigger_config_min) {
+        return true;
+    }
+
+    pre_trigger_config_min = cur_trigger_config_min;
+    cout << cur_trigger_config_min << endl;
+
+    Redis redis_user_trigger_config;
+    if (!redis_user_trigger_config.Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
+        LOG(WARNING) << "connect user_trigger_config redis failed" ;
+        return false;
+    }
+
+    string base_value;
+    redis_user_trigger_config.Get("base_config", &base_value);
+    cout << base_value << endl;
+
+    return true;
+}
+
+bool UserQuery::Init() {
     redis_userid  = new Redis();
     if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
         LOG(WARNING) << "connect userid redis failed" ;
@@ -26,6 +56,7 @@ bool UserQuery::InitRedis() {
     return true;
 }
 
+//获取用户uid
 bool UserQuery::Parse(string behaver_message) {
     if(behaver_message.find("userid\":\"") == string::npos) {
         return false;
