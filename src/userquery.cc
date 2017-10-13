@@ -31,7 +31,6 @@ bool UserQuery::FreshTriggerConfig() {
     }
 
     pre_trigger_config_min = cur_trigger_config_min;
-    cout << cur_trigger_config_min << endl;
 
     Redis redis_user_trigger_config;
     if (!redis_user_trigger_config.Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
@@ -40,13 +39,17 @@ bool UserQuery::FreshTriggerConfig() {
     }
 
     redis_user_trigger_config.Get("base_config", &base_value);
-    cout << base_value << endl;
 
     parse_config();
     return true;
 }
 
 void UserQuery::parse_config() {
+    Json::Value base_all_config;
+    Json::Reader reader;
+    reader.parse(base_value.c_str(), base_all_config);
+    cout << base_all_config["dimensions"][0]["filters_list"].size() << endl;
+    cout << base_all_config["dimensions"][1]["filters_list"].size() << endl;
     return;
 }
 

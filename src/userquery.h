@@ -41,7 +41,7 @@ class UserQuery{
         int pre_trigger_config_min;
         int cur_trigger_config_min;
 
-        std::string base_value; //基数 资源表
+        std::string base_value; //基数 资源
 };
 
 #endif
