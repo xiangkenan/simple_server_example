@@ -4,11 +4,15 @@ using namespace std;
 
 bool UserQuery::Init(string behaver_message) {
 
-    //if (InitRedis() == false) {
-    //    return false;
-    //}
+    if (InitRedis() == false) {
+        return false;
+    }
 
-    Parse(behaver_message);
+    if(!Parse(behaver_message)) {
+        return false;
+    }
+
+    cout << uid << endl;
     return true;
 }
 
@@ -23,17 +27,21 @@ bool UserQuery::InitRedis() {
 }
 
 bool UserQuery::Parse(string behaver_message) {
-    //if(behaver_message.find("userid\":\"") == string::npos) {
-    //    return false;
-    //}
-    //string user_id_md5 = behaver_message.substr(behaver_message.find("userid\":\"")+9, 32);
-    //if (user_id_md5.size() != 32) {
-    //    return false;
-    //}
+    if(behaver_message.find("userid\":\"") == string::npos) {
+        return false;
+    }
+    string user_id_md5 = behaver_message.substr(behaver_message.find("userid\":\"")+9, 32);
+    if (user_id_md5.size() != 32) {
+        return false;
+    }
 
-    //string value;
-    //redis_userid->HGet("user_info_"+user_id_md5, "userid", &value);
-    cout << behaver_message << endl;
+    string value;
+    redis_userid->HGet("user_info_"+user_id_md5, "userid", &value);
+    if(value.empty()) {
+        return false;
+    }
+    //赋值用户id
+    uid = value;
 
     return true;
 }

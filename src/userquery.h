@@ -31,6 +31,7 @@ class UserQuery{
         }
 
         Redis *redis_userid;
+        std::string uid;
 
 };
 

@@ -61,7 +61,8 @@ bool kafka_consumer_client::initClient(){
       在ZK中没有offset值时(比如新的groupId,或者是zk数据被清空),consumer应该从哪个offset开始
       消费.largest表示接受接收最大的offset(即最新消息),smallest表示最小offset,即从topic的
       开始位置消费所有消息.*/
-    if(tconf->set("auto.offset.reset", "smallest", errstr) != RdKafka::Conf::CONF_OK){
+    //if(tconf->set("auto.offset.reset", "smallest", errstr) != RdKafka::Conf::CONF_OK){
+    if(tconf->set("auto.offset.reset", "largest", errstr) != RdKafka::Conf::CONF_OK){
         fprintf(stderr, "RdKafka conf set auto.offset.reset failed : %s\n", errstr.c_str());
     }
 
