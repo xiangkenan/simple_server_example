@@ -9,7 +9,17 @@
 
 #include "redis.h"
 
-class UserQuery{
+class base_config {
+    base_config():filter_id("") {}
+
+    std::string filter_id;
+    std::vector<std::string> optiion_id;
+    std::vector<std::string> values;
+
+
+};
+
+class UserQuery {
     public:
         UserQuery();
         ~UserQuery() {};
@@ -17,7 +27,7 @@ class UserQuery{
         bool Run(std::string behaver_message);
     private:
         bool Parse(std::string behaver_message);
-        void parse_config();
+        void parse_noah_config();
         bool FreshTriggerConfig();
         void Split(const std::string& s,
                 const std::string& delim,
@@ -42,6 +52,7 @@ class UserQuery{
         int cur_trigger_config_min;
 
         std::string base_value; //基数 资源
+        std::string base_choose_value; //基数 选择
 };
 
 #endif

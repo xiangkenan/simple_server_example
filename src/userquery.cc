@@ -39,17 +39,51 @@ bool UserQuery::FreshTriggerConfig() {
     }
 
     redis_user_trigger_config.Get("base_config", &base_value);
+    redis_user_trigger_config.Get("base_choose_config", &base_choose_value);
 
-    parse_config();
+    parse_noah_config();
     return true;
 }
 
-void UserQuery::parse_config() {
-    Json::Value base_all_config;
+void UserQuery::parse_noah_config() {
+    Json::Value base_config, base_choose_config;
     Json::Reader reader;
-    reader.parse(base_value.c_str(), base_all_config);
-    cout << base_all_config["dimensions"][0]["filters_list"].size() << endl;
-    cout << base_all_config["dimensions"][1]["filters_list"].size() << endl;
+    reader.parse(base_value.c_str(), base_config);
+    reader.parse(base_choose_value.c_str(), base_choose_config);
+
+    //load base config
+    //load choose config
+    for (unsigned int i = 0; i<base_choose_config["filters_list"].size(); ++i) {
+        Json::Value filter = base_choose_config["filters_list"][i];
+        string filter_id = filter["filter_id"].asString();
+        string option_id = filter["options"]["option_id"].asString();
+        vector<string> input_config;
+        for(unsigned int i = 0; i < filter["values"]["input"].size(); ++i) {
+            input_config.push_back(filter["values"]["input"][i].asString());
+        }
+        vector<string> list_config;
+        for(unsigned int i = 0; i < filter["values"]["list"].size(); ++i) {
+            list_config.push_back(filter["values"]["list"][i].asString());
+        }
+
+        cout << "filter_id:" + filter_id << endl;
+        cout << "option_id:" + option_id << endl;
+        if (!input_config.empty()) {
+            cout << "input:" << endl;
+            for (unsigned int i = 0; i<input_config.size(); ++i) {
+                cout << input_config[i] << endl;
+            }
+        }
+
+        if (!list_config.empty()) {
+            cout << "list:" << endl;
+            for (unsigned int i = 0; i<list_config.size(); ++i) {
+                cout << list_config[i] << endl;
+            }
+        }
+
+    }
+
     return;
 }
 
