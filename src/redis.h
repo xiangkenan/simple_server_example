@@ -11,12 +11,14 @@ class Redis {
   public:
     Redis() {
         connect_ = NULL;
+        reply = NULL;
     }
     ~Redis() {
         if(connect_ != NULL)
            redisFree(connect_);
 
         connect_ = NULL;
+        reply = NULL;
     }
 
     bool Connect(const std::string& host, const int port, const std::string& passwd = "") {
@@ -28,7 +30,7 @@ class Redis {
         }
 
         if (!passwd.empty()) {
-            redisReply* reply = (redisReply*) redisCommand(connect_, "AUTH %s", passwd.c_str());
+            reply = (redisReply*) redisCommand(connect_, "AUTH %s", passwd.c_str());
             bool error = (reply->type == REDIS_REPLY_ERROR);
             freeReplyObject(reply);
             if (error) {
@@ -41,7 +43,7 @@ class Redis {
     }
 
     bool Expire(const std::string &key, const int time) {
-        redisReply* reply = (redisReply*) redisCommand(connect_, "EXPIRE %s %d", key.c_str(), time);
+        reply = (redisReply*) redisCommand(connect_, "EXPIRE %s %d", key.c_str(), time);
 
         bool error = (reply->type == REDIS_REPLY_ERROR);
         freeReplyObject(reply);
@@ -56,7 +58,7 @@ class Redis {
 
     bool Get(const std::string& key, std::string* value) {
         value->clear();
-        redisReply* reply = (redisReply*) redisCommand(connect_, "GET %s", key.c_str());
+        reply = (redisReply*) redisCommand(connect_, "GET %s", key.c_str());
         if (reply->len > 0) {
             value->assign(reply->str);
         }
@@ -74,7 +76,7 @@ class Redis {
 
     bool HGet(const std::string &id, const std::string &key ,std::string *value) {
         value->clear();
-        redisReply* reply = (redisReply*) redisCommand(connect_, "HGET %s %s", id.c_str(), key.c_str());
+        reply = (redisReply*) redisCommand(connect_, "HGET %s %s", id.c_str(), key.c_str());
         if (reply->len > 0) {
             value->assign(reply->str);
         }
@@ -91,7 +93,6 @@ class Redis {
     }
 
     bool Set(const std::string& key, const std::string& value, const int expire_time = 0) {
-        redisReply* reply;
         if (expire_time > 0) {
             reply = (redisReply*) redisCommand(connect_, "SETEX %s %d %s", key.c_str(), expire_time, value.c_str());
         } else {
@@ -109,7 +110,7 @@ class Redis {
     }
 
     bool Incr(const std::string& key) {
-        redisReply* reply = (redisReply*) redisCommand(connect_, "INCR %s", key.c_str());
+        reply = (redisReply*) redisCommand(connect_, "INCR %s", key.c_str());
         bool error = (reply->type == REDIS_REPLY_ERROR);
         freeReplyObject(reply);
         if (error) {
@@ -121,7 +122,7 @@ class Redis {
     }
 
     bool GetTTL(const std::string& key, int* ttl) {
-        redisReply* reply = (redisReply*) redisCommand(connect_, "TTL %s", key.c_str());
+        reply = (redisReply*) redisCommand(connect_, "TTL %s", key.c_str());
         bool error = (reply->type == REDIS_REPLY_ERROR);
         *ttl = reply->integer;
         freeReplyObject(reply);
@@ -135,6 +136,7 @@ class Redis {
 
   private:
     redisContext* connect_;
+    redisReply* reply;
 };
 
 #endif  //_REDIS_H_

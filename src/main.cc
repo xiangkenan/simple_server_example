@@ -5,7 +5,7 @@ static void sigterm (int sig) {
 }
 
 int main(int argc, char **argv){
-    FLAGS_logbufsecs = 0;
+    //FLAGS_logbufsecs = 0;
     FLAGS_log_dir = "./log";
     google::InitGoogleLogging("user_behaviour");
     int opt;
@@ -39,6 +39,7 @@ int main(int argc, char **argv){
     signal(SIGKILL, sigterm);
     signal(SIGFPE, sigterm);
 
+    try {
     std::shared_ptr<kafka_consumer_client> kafka_consumer_client_ = std::make_shared<kafka_consumer_client>(brokers, topics, group, 0, partition);
     if (!kafka_consumer_client_->initClient()){
         fprintf(stderr, "kafka server initialize error\n");
@@ -48,6 +49,11 @@ int main(int argc, char **argv){
     }
 
     fprintf(stderr, "kafka consume exit! \n");
+    } catch (std::runtime_error &e) {
+        LOG(ERROR) << "catch runtime error:" <<  e.what();
+    } catch (...) {
+        LOG(ERROR) << "catch unknown error";
+    }
 
     return 0;
 }

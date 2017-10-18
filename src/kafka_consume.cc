@@ -92,7 +92,7 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
 
     switch(message->err()){
         case RdKafka::ERR__TIMED_OUT:
-            LOG(INFO) << "ERR__TIMED_OUT";
+            LOG(WARNING) << "ERR__TIMED_OUT";
             break;
         case RdKafka::ERR_NO_ERROR:
             //printf("%.*s\n\n", 
@@ -104,16 +104,16 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
             last_offset_ = message->offset();
             break;
         case RdKafka::ERR__PARTITION_EOF:
-            LOG(INFO) << "ERR__PARTITION_EOF=>" << last_offset_ << "Reached the end of the queue, offset: ";
+            LOG(WARNING) << "ERR__PARTITION_EOF=>" << last_offset_ << "Reached the end of the queue, offset: ";
             break;
         case RdKafka::ERR__UNKNOWN_TOPIC:
-            LOG(INFO) << "ERR__UNKNOWN_TOPIC";
+            LOG(WARNING) << "ERR__UNKNOWN_TOPIC";
         case RdKafka::ERR__UNKNOWN_PARTITION:
-            LOG(INFO) << "ERR__UNKNOWN_PARTITION=>" << "Consume failed: " << message->errstr() << endl;
+            LOG(WARNING) << "ERR__UNKNOWN_PARTITION=>" << "Consume failed: " << message->errstr() << endl;
             run_ = false;
             break;
         default:
-            LOG(INFO) << "default=>" << "Consume failed: " << message->errstr()  << endl;
+            LOG(WARNING) << "default=>" << "Consume failed: " << message->errstr()  << endl;
             run_ = false;
             break;
     }
