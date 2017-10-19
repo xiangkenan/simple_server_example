@@ -7,6 +7,7 @@
 #include <time.h>
 #include <jsoncpp/jsoncpp.h>
 #include <stdlib.h>
+#include <murl.h>
 
 #include "redis.h"
 
@@ -44,6 +45,8 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
 
         bool SendMessage();
+        bool pretreatment(Json::Value all_config);
+        Json::Value get_url_json(char* buf);
 
         void Split(const std::string& s,
                 const std::string& delim,
@@ -67,6 +70,7 @@ class UserQuery {
 
         std::string uid; //用户uid
         std::string action;//用户开锁行为
+        std::string activity; //活动
 
         int pre_trigger_config_min;
         int cur_trigger_config_min;

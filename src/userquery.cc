@@ -23,15 +23,59 @@ bool UserQuery::Run(string behaver_message) {
     }
 
     //发短信
-    if (!SendMessage()) {
-        return false;
-    }
+    SendMessage();
 
+    LOG(INFO) << log_str;
     return true;
 }
 
+Json::Value UserQuery::get_url_json(char* buf) {
+    Json::Value result;
+    char * ret_begin = buf + sizeof (uint32_t);
+    char * ret_end = buf + sizeof (uint32_t) + *((uint32_t *) buf);
+    *ret_end = '\0';
+
+    bool rt = reader.parse(ret_begin, ret_end, result);
+    if (!rt) {
+        LOG(WARNING) << "murl_get_url parse failed url";
+        return false;
+    }
+
+    return result;
+}
+
 bool UserQuery::SendMessage() {
-    LOG(INFO) << log_str;
+    //LOG(INFO) << log_str;
+    int ret;
+    char buf[1024];
+    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity,"+activity;
+    if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+        LOG(WARNING) << "riskmgt interface error";
+        return false;
+    }
+
+    Json::Value result;
+    result = get_url_json(buf);
+    if (result["code"].asString() == "500") {
+        log_str += "=>:hit_freq: activity full";
+        return false;
+    }
+
+    memset(buf, 0, 1024);
+    url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=user_id,"+ uid;
+    if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+        LOG(WARNING) << "riskmgt interface error";
+        return false;
+    }
+
+    result = get_url_json(buf);
+    if (result["code"].asString() == "500") {
+        log_str += "=>:hit_freq: userid full";
+        return false;
+    }
+
+    log_str += "=>send message";
+
     return true;
 }
 
@@ -290,7 +334,7 @@ bool UserQuery::HandleProcess() {
         }
 
         if (flag_hit == 0) {
-            log_str += ">>:hit_result: " + iter->first;
+            log_str += "=>:hit_result: " + iter->first;
             return true;
         }
     }
@@ -319,13 +363,16 @@ bool UserQuery::FreshTriggerConfig() {
     return true;
 }
 
-void UserQuery::parse_noah_config() {
+bool UserQuery::pretreatment(Json::Value all_config) {
+    activity = all_config["activityId"].asString();
+    if (all_config["status"].asString() != "true") {
+        return false;
+    }
 
-    //释放圈选数据
-    //for (unsigned int i = 0; i < lasso_config_set.size(); ++i) {
-    //    delete lasso_config_set[i];
-    //}
-    //lasso_config_set.clear();
+    return true;
+}
+
+void UserQuery::parse_noah_config() {
 
     lasso_config_map.clear();
 
@@ -334,10 +381,15 @@ void UserQuery::parse_noah_config() {
         Json::Value all_config, lasso_config, offline_config, real_config;
         reader.parse((iter->second).c_str(), all_config);
 
+        if (!pretreatment(all_config)) {
+            continue;
+        }
+
         lasso_config = all_config["filter_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
         //real_config = all_config["jobArray"][1]["filter_list"];
-        //cout << lasso_config << endl;
+        //cout << offline_config << endl;
+        //cout << all_config << endl;
 
 
         //初始化圈选数据
@@ -361,24 +413,24 @@ void UserQuery::parse_noah_config() {
         lasso_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, lasso_config_set));
 
         //初始化圈选数据
-        //for (unsigned int i = 0; i < offline_config.size(); ++i) {
-        //    BaseConfig base_config;
-        //    base_config.filter_id = offline_config[i]["filter_id"].asString();
-        //    base_config.option_id = offline_config[i]["options"]["option_id"].asString();
-        //    base_config.value_id = offline_config[i]["value"]["value_id"].asString();
-        //    if (base_config.value_id.find("LIST_MULTIPLE") != string::npos) {
-        //        for (unsigned int j = 0; j < offline_config[i]["value"]["list"].size(); ++j) {
-        //            base_config.values.push_back(offline_config[i]["values"]["list"][j].asString());
-        //        }
-        //    } else if (base_config.value_id.find("VALUE_INPUT") != string::npos) {
-        //        for (unsigned int j = 0; j < offline_config[i]["value"]["input"].size(); ++j) {
-        //            base_config.values.push_back(offline_config[i]["values"]["input"][j].asString());
-        //        }
-        //    }
+        for (unsigned int i = 0; i < offline_config.size(); ++i) {
+            BaseConfig base_config;
+            base_config.filter_id = offline_config[i]["filter_id"].asString();
+            base_config.option_id = offline_config[i]["options"]["option_id"].asString();
+            base_config.value_id = offline_config[i]["value"]["value_id"].asString();
+            if (base_config.value_id.find("LIST_MULTIPLE") != string::npos) {
+                for (unsigned int j = 0; j < offline_config[i]["values"]["list"].size(); ++j) {
+                    base_config.values.push_back(offline_config[i]["values"]["list"][j].asString());
+                }
+            } else if (base_config.value_id.find("VALUE_INPUT") != string::npos) {
+                for (unsigned int j = 0; j < offline_config[i]["values"]["input"].size(); ++j) {
+                    base_config.values.push_back(offline_config[i]["values"]["input"][j].asString());
+                }
+            }
 
-        //    offline_config_set.push_back(base_config);
-        //}
-        //offline_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, offline_config_set));
+            offline_config_set.push_back(base_config);
+        }
+        offline_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, offline_config_set));
 
     }
 
