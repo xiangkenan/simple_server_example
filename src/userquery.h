@@ -33,15 +33,17 @@ class UserQuery {
         bool Parse(std::string behaver_message);
         void parse_noah_config();
         bool FreshTriggerConfig();
-        bool data_core_operate(BaseConfig* config, std::string user_msg, int flag);
+        bool data_core_operate(const BaseConfig& config, std::string user_msg, int flag);
 
         bool get_url(const char *url, char *buf, int size, long timeout_ms, const char *cookie, const char *token);
         bool write_log(std::string msg, bool flag);
-        bool is_include(BaseConfig* config, std::string user_msg); //包含,不包含类型
-        bool is_confirm(BaseConfig* config, std::string user_msg); //是,否类型
-        bool is_time_range(BaseConfig* config, std::string user_msg); //是否在时间范围内
-        bool is_time_range_value(BaseConfig* config, std::string user_msg); //是否在时间范围内,并且满足条件
-        bool is_range_value(BaseConfig* config, std::string user_msg); // 是否大于，小于，范围
+        bool is_include(const BaseConfig& config, std::string user_msg); //包含,不包含类型
+        bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
+        bool is_time_range(const BaseConfig& config, std::string user_msg); //是否在时间范围内
+        bool is_time_range_value(const BaseConfig& config, std::string user_msg); //是否在时间范围内,并且满足条件
+        bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
+
+        bool SendMessage();
 
         void Split(const std::string& s,
                 const std::string& delim,
@@ -71,13 +73,14 @@ class UserQuery {
 
         Json::Reader reader;
         Json::FastWriter writer;
-        std::string all_json;
         std::string base_value; //基数 资源
         std::string base_choose_value; //基数 选择
 
-        std::vector<BaseConfig*> lasso_config_set;
-        std::vector<BaseConfig*> offline_config_set;
-        std::vector<BaseConfig*> real_config_set;
+        std::map<std::string, std::string> all_json;
+
+        std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
+        std::map<std::string, std::vector<BaseConfig>> offline_config_map;
+ //       std::map<std::string, std::vector<BaseConfig>> real_config_map;
 
         std::string log_str;
 };

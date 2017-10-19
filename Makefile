@@ -6,13 +6,15 @@ LIB=${DIR}/lib
 INCLUDE=  -I/usr/local/include/librdkafka \
 		  -I./lib/glog/include \
 		  -I./lib/jsoncpp/include \
-		  -I./lib/curl/include
+		  -I./lib/curl/include \
+		  -I./lib/murl/include
 
 LDFLAGS=  -L/usr/local/lib -lrdkafka \
 		  -L./lib/glog/lib -lglog -Wl,-rpath,./lib/glog/lib \
 		  -L./lib/jsoncpp/lib -ljsoncpp \
 		  -L./lib/curl/lib -lcurl \
-		  -L./lib/curl/lib -lcares
+		  -L./lib/curl/lib -lcares \
+		  -L./lib/murl/lib -lmurl
 
 
 CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis

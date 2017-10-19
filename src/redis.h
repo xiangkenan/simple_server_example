@@ -74,6 +74,26 @@ class Redis {
         return true;
     }
 
+    bool HGetAll(const std::string &id, std::map<std::string, std::string> *value) {
+        value->clear();
+        reply = (redisReply*) redisCommand(connect_, "HGETALL %s", id.c_str());
+
+        bool error = (reply->type == REDIS_REPLY_ERROR);
+        if (error) {
+            LOG(ERROR) << "Failed to hgetall value from key: " << id;
+            freeReplyObject(reply);
+            return false;
+        }
+
+        for (int i = 0; (reply->element)[i] != NULL; i += 2) {
+            value->insert(std::pair<std::string, std::string>((reply->element)[i]->str, (reply->element)[i+1]->str));
+            //value[(reply->element)[i]->str] = (reply->element)[i+1]->str;
+        }
+        freeReplyObject(reply);
+
+        return true;
+    }
+
     bool HGet(const std::string &id, const std::string &key ,std::string *value) {
         value->clear();
         reply = (redisReply*) redisCommand(connect_, "HGET %s %s", id.c_str(), key.c_str());
