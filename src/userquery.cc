@@ -239,72 +239,72 @@ bool UserQuery::HandleProcess() {
         log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.size(); ++i) {
             if (iter->second[i].filter_id == "userprofile.city") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["0"].asString(), 1)) {
-                    flag_hit = -1;
-                    break;
-                }
-            } else if (iter->second[i].filter_id == "userprofile.competitor") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1"].asString(), 1)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.oauth") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["2"].asString(), 2)) {
+            } else if (iter->second[i].filter_id == "userprofile.competitor") {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["2"].asString(), 1)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.bond") {
+            } else if (iter->second[i].filter_id == "userprofile.oauth") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["3"].asString(), 2)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.recharge") {
+            } else if (iter->second[i].filter_id == "userprofile.bond") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["4"].asString(), 2)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.device") {
+            } else if (iter->second[i].filter_id == "userprofile.recharge") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["5"].asString(), 2)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.reg_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["6"].asString(), 3)) {
+            } else if (iter->second[i].filter_id == "userprofile.device") {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["6"].asString(), 2)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.auth_time") {
+            } else if (iter->second[i].filter_id == "userprofile.reg_time") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["7"].asString(), 3)) {
                     flag_hit = -1;
                     break;
                 }
-            } else if (iter->second[i].filter_id == "userprofile.first_order_time") {
+            } else if (iter->second[i].filter_id == "userprofile.auth_time") {
                 if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 3)) {
                     flag_hit = -1;
                     break;
                 }
+            } else if (iter->second[i].filter_id == "userprofile.first_order_time") {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1008"].asString(), 3)) {
+                    flag_hit = -1;
+                    break;
+                }
             } else if (iter->second[i].filter_id == "order.order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1001"].asString(), 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.repair_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1002"].asString(), 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.free_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1003"].asString(), 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.weekday_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1004"].asString(), 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.peak_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1005"].asString(), 4)) {
                     flag_hit = -1;
                     break;
                 }
@@ -478,9 +478,16 @@ bool UserQuery::Parse(string behaver_message) {
         return false;
     }
 
+    string value_tel;
+    redis_userid->HGet("user_info_"+user_id_md5, "telephone", &value_tel);
+    if(value_tel.empty()) {
+        return false;
+    }
+
     //赋值用户id,action
     uid = value;
     action = user_json["content"][0]["action"].asString();
+    tel = value_tel;
 
     return true;
 }

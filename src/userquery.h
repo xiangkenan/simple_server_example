@@ -71,6 +71,7 @@ class UserQuery {
         std::string uid; //用户uid
         std::string action;//用户开锁行为
         std::string activity; //活动
+        std::string tel; //电话
 
         int pre_trigger_config_min;
         int cur_trigger_config_min;
