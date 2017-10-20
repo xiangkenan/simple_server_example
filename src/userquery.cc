@@ -81,24 +81,47 @@ bool UserQuery::SendMessage() {
 
 bool UserQuery::is_include(const BaseConfig& config, string user_msg) {
     string not_contain;
-    if (config.filter_id == "userprofile.city")
+    vector<string> user_msg_vec;
+    user_msg_vec.push_back(user_msg);
+    if (config.filter_id == "userprofile.city") {
         not_contain = ".NOT_IN.";
-    else if (config.filter_id == "userprofile.competitor")
+    } else if (config.filter_id == "userprofile.competitor") {
         not_contain = "BITMAP_NONE";
-    else
+        user_msg_vec.clear();
+        if (user_msg.find("摩拜单车") != string::npos) 
+            user_msg_vec.push_back("1");
+        if (user_msg.find("小蓝单车") != string::npos) 
+            user_msg_vec.push_back("2");
+        if (user_msg.find("一步单车") != string::npos) 
+            user_msg_vec.push_back("4");
+        if (user_msg.find("优拜单车") != string::npos) 
+            user_msg_vec.push_back("32");
+        if (user_msg.find("hello单车") != string::npos) 
+            user_msg_vec.push_back("64");
+        if (user_msg.find("小鸣单车") != string::npos) 
+            user_msg_vec.push_back("2048");
+        if (user_msg.find("永安行") != string::npos) 
+            user_msg_vec.push_back("16384");
+    } else {
         not_contain = ".NOT_IN.";
+    }
+
     if (config.option_id.find(not_contain) != string::npos) {
         for (unsigned int i = 0; i < config.values.size(); ++i) {
-            if(config.values[i] == user_msg)
-                return false;
+            for (unsigned int j =0; j < user_msg_vec.size(); ++j) {
+                if(config.values[i] == user_msg_vec[j])
+                    return false;
+            }
         }
         return true;
     } else {
-        for (unsigned int i = 0; i < config.values.size(); ++i) {
-            if(config.values[i] == user_msg)
-                return true;
+        for (unsigned int i = 0; i < user_msg_vec.size(); ++i){
+            for (unsigned int j = 0; j < config.values.size(); ++j) {
+                if (user_msg_vec[i] != config.values[j])
+                    return false;
+            }
         }
-        return false;
+        return true;
     }
 
     return true;
@@ -113,7 +136,7 @@ bool UserQuery::is_confirm(const BaseConfig& config, string user_msg) {
     else if (config.filter_id == "userprofile.recharge")
         not_contain = "EQUAL_TO";
     else if (config.filter_id == "userprofile.device")
-        not_contain = "EQUAL_TO";
+        not_contain = "FILTER..device..EQUAL_TO.INT32.OPTION_PARA.2";
     else
         not_contain = "NOT_EQUAL_TO";
     if (config.option_id.find(not_contain) != string::npos) {
@@ -357,7 +380,7 @@ bool UserQuery::FreshTriggerConfig() {
 
     pre_trigger_config_min = cur_trigger_config_min;
 
-    redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
+    redis_user_trigger_config->HGetAll("crm_noah_config1", &all_json);
 
     parse_noah_config();
     return true;
@@ -465,29 +488,40 @@ bool UserQuery::Parse(string behaver_message) {
     string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6, string::npos);
     json_behaver_message[json_behaver_message.size()-1] = '\0';
     reader.parse(json_behaver_message.c_str(), user_json);
+    for (unsigned int i =0; i < user_json["content"].size(); ++i) {
+        if (user_json["content"][i]["action"].asString() == "AppLaunch_Manner_00192") {
+            action = "appstart";
+        } else if (user_json["content"][i]["action"].asString() == "Visitor_click__00215" && user_json["content"][i]["params"]["more"]["click"].asString() == "start") {
+            action = "appscan";
+        } else {
+            continue;
+        }
 
-    //string user_id_md5 = behaver_message.substr(behaver_message.find("userid\":\"")+9, 32);
-    string user_id_md5 = user_json["content"][0]["userid"].asString();
-    if (user_id_md5.size() != 32) {
-        return false;
+        //string user_id_md5 = behaver_message.substr(behaver_message.find("userid\":\"")+9, 32);
+        string user_id_md5 = user_json["content"][i]["userid"].asString();
+        if (user_id_md5.size() != 32) {
+            continue;
+        }
+
+        string value;
+        redis_userid->HGet("user_info_"+user_id_md5, "userid", &value);
+        if(value.empty()) {
+            continue;
+        }
+
+        string value_tel;
+        redis_userid->HGet("user_info_"+user_id_md5, "telephone", &value_tel);
+        if(value_tel.empty()) {
+            continue;
+        }
+
+        //赋值用户id,action
+        uid = value;
+        tel = value_tel;
+
+        return true;
     }
 
-    string value;
-    redis_userid->HGet("user_info_"+user_id_md5, "userid", &value);
-    if(value.empty()) {
-        return false;
-    }
+    return false;
 
-    string value_tel;
-    redis_userid->HGet("user_info_"+user_id_md5, "telephone", &value_tel);
-    if(value_tel.empty()) {
-        return false;
-    }
-
-    //赋值用户id,action
-    uid = value;
-    action = user_json["content"][0]["action"].asString();
-    tel = value_tel;
-
-    return true;
 }

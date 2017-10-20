@@ -85,7 +85,6 @@ class UserQuery {
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;
- //       std::map<std::string, std::vector<BaseConfig>> real_config_map;
 
         std::string log_str;
 };
