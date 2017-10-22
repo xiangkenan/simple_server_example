@@ -44,6 +44,8 @@ class UserQuery {
         bool is_time_range(const BaseConfig& config, std::string user_msg); //是否在时间范围内
         bool is_time_range_value(const BaseConfig& config, std::string user_msg); //是否在时间范围内,并且满足条件
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
+        bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
+        int distance_time_now(std::string time_msg); //距离现在多少秒
 
         bool SendMessage();
         bool pretreatment(Json::Value all_config);
