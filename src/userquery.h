@@ -13,13 +13,14 @@
 
 class BaseConfig {
     public:
-        BaseConfig():filter_id(""), option_id(""), value_id("") {
+        BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
             values.clear();
         }
 
         std::string filter_id;
         std::string option_id;
         std::string value_id;
+        std::string map_field;
         std::vector<std::string> values;
 };
 
@@ -34,7 +35,7 @@ class UserQuery {
         bool Parse(std::string behaver_message);
         void parse_noah_config();
         bool FreshTriggerConfig();
-        bool data_core_operate(const BaseConfig& config, std::string user_msg, int flag);
+        bool data_core_operate(const BaseConfig& config, Json::Value user_msg_json, int flag);
 
         bool get_url(const char *url, char *buf, int size, long timeout_ms, const char *cookie, const char *token);
         bool write_log(std::string msg, bool flag);
@@ -85,6 +86,7 @@ class UserQuery {
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;
+        std::map<std::string, std::string> redis_field_map;
 
         std::string log_str;
 };

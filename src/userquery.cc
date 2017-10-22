@@ -5,6 +5,21 @@ using namespace std;
 UserQuery::UserQuery() {
     pre_trigger_config_min = 0;
     cur_trigger_config_min = 0;
+
+    redis_field_map["userprofile.city"] = "1";
+    redis_field_map["userprofile.competitor"] = "2";
+    redis_field_map["userprofile.oauth"] = "3";
+    redis_field_map["userprofile.bond"] = "4";
+    redis_field_map["userprofile.recharge"] = "5";
+    redis_field_map["userprofile.device"] = "6";
+    redis_field_map["userprofile.reg_time"] = "7";
+    redis_field_map["userprofile.auth_time"] = "8";
+    redis_field_map["userprofile.first_order_time"] = "1008";
+    redis_field_map["order.order"] = "1001";
+    redis_field_map["order.repair_order"] = "1002";
+    redis_field_map["order.free_order"] = "1003";
+    redis_field_map["order.weekday_order"] = "1004";
+    redis_field_map["order.peak_order"] = "1005";
 }
 
 bool UserQuery::Run(string behaver_message) {
@@ -105,7 +120,8 @@ bool UserQuery::is_include(const BaseConfig& config, string user_msg) {
     } else {
         not_contain = ".NOT_IN.";
     }
-
+    
+    int flag = 0;
     if (config.option_id.find(not_contain) != string::npos) {
         for (unsigned int i = 0; i < config.values.size(); ++i) {
             for (unsigned int j =0; j < user_msg_vec.size(); ++j) {
@@ -117,9 +133,14 @@ bool UserQuery::is_include(const BaseConfig& config, string user_msg) {
     } else {
         for (unsigned int i = 0; i < user_msg_vec.size(); ++i){
             for (unsigned int j = 0; j < config.values.size(); ++j) {
-                if (user_msg_vec[i] != config.values[j])
-                    return false;
+                if (user_msg_vec[i] == config.values[j]) {
+                    flag = 1;
+                }
             }
+            if (flag != 1)
+                return false;
+            else
+                flag = 0;
         }
         return true;
     }
@@ -175,7 +196,8 @@ bool UserQuery::is_time_range(const BaseConfig& config, string user_msg) {
 }
 
 bool UserQuery::is_time_range_value(const BaseConfig& config, string user_msg) {
-    if (config.option_id.find("GREATER") != string::npos) {
+
+    if (config.value_id.find("GREATER") != string::npos) {
         if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
             return false;
     } else if (config.value_id.find("LESS") != string::npos) {
@@ -205,10 +227,10 @@ bool UserQuery::is_range_value(const BaseConfig& config, string user_msg) {
 
 bool UserQuery::write_log(string msg, bool flag) {
     if (flag == true) {
-        log_str += "&yes:" + msg;
+        log_str += "&" + msg;
     }
     else {
-        log_str += "&no:" + msg;
+        log_str += "&no" + msg;
     }
     return flag;
 }
@@ -220,24 +242,25 @@ bool UserQuery::write_log(string msg, bool flag) {
  * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件）
  * 5:满足大于，小于，范围
 */
-bool UserQuery::data_core_operate(const BaseConfig& config, string user_msg, int flag) {
+bool UserQuery::data_core_operate(const BaseConfig& config, Json::Value user_msg_json, int flag) {
+    string user_msg = user_msg_json["rv"][redis_field_map[config.filter_id]].asString();
     bool ret;
     switch (flag) {
         case 1:
             ret = is_include(config, user_msg);
-            return write_log(config.filter_id, ret);
+            return write_log(config.map_field, ret);
         case 2:
             ret = is_confirm(config, user_msg);
-            return write_log(config.filter_id, ret);
+            return write_log(config.map_field, ret);
         case 3:
             ret = is_time_range(config, user_msg);
-            return write_log(config.filter_id, ret);
+            return write_log(config.map_field, ret);
         case 4:
             ret = is_time_range_value(config, user_msg);
-            return write_log(config.filter_id, ret);
+            return write_log(config.map_field, ret);
         case 5:
             ret = is_range_value(config, user_msg);
-            return write_log(config.filter_id, ret);
+            return write_log(config.map_field, ret);
         default:
             log_str += " 未知字段未满足";
             return false;
@@ -262,99 +285,99 @@ bool UserQuery::HandleProcess() {
         log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.size(); ++i) {
             if (iter->second[i].filter_id == "userprofile.city") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1"].asString(), 1)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 1)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.competitor") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["2"].asString(), 1)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 1)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.oauth") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["3"].asString(), 2)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.bond") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["4"].asString(), 2)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.recharge") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["5"].asString(), 2)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.device") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["6"].asString(), 2)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.reg_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["7"].asString(), 3)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.auth_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 3)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.first_order_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1008"].asString(), 3)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1001"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.repair_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1002"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.free_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1003"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.weekday_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1004"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.peak_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["1005"].asString(), 4)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.month_card") {
-                if(!data_core_operate(iter->second[i], offline_data_json["rv"]["8"].asString(), 5)) {
+                if(!data_core_operate(iter->second[i], offline_data_json, 5)) {
                     flag_hit = -1;
                     break;
                 }
             }
         }
 
-        for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
-            if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
-                int silence_day = atoi(offline_data_json["rv"]["8"].asString().c_str());
-                for (unsigned int j = 0; j < offline_config_map[iter->first][i].values.size(); ++j) {
-                    if (silence_day != atoi(offline_config_map[iter->first][i].values[j].c_str())){
-                        flag_hit = -1;
-                    } else {
-                        flag_hit = 0;
-                        break;
-                    }
-                }
-                if (flag_hit == -1) {
-                    break;
-                }
-            }
-        }
+        //for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
+        //    if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
+        //        int silence_day = atoi(offline_data_json["rv"]["8"].asString().c_str());
+        //        for (unsigned int j = 0; j < offline_config_map[iter->first][i].values.size(); ++j) {
+        //            if (silence_day != atoi(offline_config_map[iter->first][i].values[j].c_str())){
+        //                flag_hit = -1;
+        //            } else {
+        //                flag_hit = 0;
+        //                break;
+        //            }
+        //        }
+        //        if (flag_hit == -1) {
+        //            break;
+        //        }
+        //    }
+        //}
 
         if (flag_hit == 0) {
             log_str += "=>:hit_result: " + iter->first;
@@ -380,7 +403,7 @@ bool UserQuery::FreshTriggerConfig() {
 
     pre_trigger_config_min = cur_trigger_config_min;
 
-    redis_user_trigger_config->HGetAll("crm_noah_config1", &all_json);
+    redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
 
     parse_noah_config();
     return true;
@@ -430,6 +453,7 @@ void UserQuery::parse_noah_config() {
                     base_config.values.push_back(lasso_config[i]["values"]["input"][j].asString());
                 }
             }
+            base_config.map_field = redis_field_map[base_config.filter_id];
 
             lasso_config_set.push_back(base_config);
         }
@@ -450,6 +474,7 @@ void UserQuery::parse_noah_config() {
                     base_config.values.push_back(offline_config[i]["values"]["input"][j].asString());
                 }
             }
+            base_config.map_field = redis_field_map[base_config.filter_id];
 
             offline_config_set.push_back(base_config);
         }
