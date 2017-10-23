@@ -17,7 +17,7 @@ LDFLAGS=  -L/usr/local/lib -lrdkafka \
 		  -L./lib/murl/lib -lmurl
 
 
-CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis
+CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis -lpthread
 
 all: run clean
 

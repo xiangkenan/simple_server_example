@@ -188,12 +188,6 @@ int UserQuery::distance_time_now(string time_msg) {
 }
 
 bool UserQuery::is_time_range(const BaseConfig& config, string user_msg) {
-    //struct tm tmp_time;
-    //strptime(user_msg.c_str(),"%Y%m%d %H:%M:%S",&tmp_time);
-    //time_t user_time, cur_time;
-    //user_time = mktime(&tmp_time);
-    //time(&cur_time);
-    //double cost = difftime(cur_time, user_time);
     double cost = distance_time_now(user_msg);
     if (config.option_id.find("-7D.") != string::npos) {
         if (cost > 604800)
@@ -396,6 +390,9 @@ bool UserQuery::HandleProcess() {
             }
         }
 
+        if (flag_hit == -1)
+            continue;
+
         for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
             if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
                 if(!data_core_operate(offline_config_map[iter->first][i], offline_data_json, 1)) {
@@ -407,37 +404,54 @@ bool UserQuery::HandleProcess() {
                     flag_hit = -1;
                     break;
                 }
-                //if (offline_config_map[iter->first][i].option_id == "app.action.appon"){
-                //    if (action == "appscan") {
-                //        flag_hit = -1;
-                //        break;
-                //    }
-                //} else {
-                //    if (action == "appstart") {
-                //        flag_hit = -1;
-                //        break;
-                //    }
-                //}
             }
         }
 
-        if (flag_hit == 0) {
-            log_str += "=>:hit_result: " + iter->first;
-            return true;
-        }
+        if (flag_hit == -1)
+            continue;
+
+        log_str += "=>:hit_result: " + iter->first;
+        return true;
     }
 
     LOG(INFO) << log_str;
     return false;
 }
 
+int UserQuery::FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone)
+{
+    static const int kHoursInDay = 24;
+    static const int kMinutesInHour = 60;
+    static const int kDaysFromUnixTime = 2472632;
+    static const int kDaysFromYear = 153;
+    static const int kMagicUnkonwnFirst = 146097;
+    static const int kMagicUnkonwnSec = 1461;
+    tm->tm_sec  =  unix_sec % kMinutesInHour;
+    int i      = (unix_sec/kMinutesInHour);
+    tm->tm_min  = i % kMinutesInHour; //nn
+    i /= kMinutesInHour;
+    tm->tm_hour = (i + time_zone) % kHoursInDay; // hh
+    tm->tm_mday = (i + time_zone) / kHoursInDay;
+    int a = tm->tm_mday + kDaysFromUnixTime;
+    int b = (a*4  + 3)/kMagicUnkonwnFirst;
+    int c = (-b*kMagicUnkonwnFirst)/4 + a;
+    int d =((c*4 + 3) / kMagicUnkonwnSec);
+    int e = -d * kMagicUnkonwnSec;
+    e = e/4 + c;
+    int m = (5*e + 2)/kDaysFromYear;
+    tm->tm_mday = -(kDaysFromYear * m + 2)/5 + e + 1;
+    tm->tm_mon = (-m/10)*12 + m + 2;
+    tm->tm_year = b*100 + d  - 6700 + (m/10);
+    return 0;
+}
+
 bool UserQuery::FreshTriggerConfig() {
     time_t timep;
-    struct tm *p;
+    struct tm p;
     time(&timep);
-    p = localtime(&timep);
+    FastSecondToDate(timep, &p, 8);
 
-    cur_trigger_config_min = p->tm_min;
+    cur_trigger_config_min = p.tm_min;
 
     if (cur_trigger_config_min == pre_trigger_config_min) {
         return true;
@@ -466,7 +480,7 @@ void UserQuery::parse_noah_config() {
 
     for (map<string, string>::iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
         vector<BaseConfig> lasso_config_set, offline_config_set, real_config_set;
-        Json::Value all_config, lasso_config, offline_config, real_config;
+        Json::Value all_config, lasso_config, offline_config;
         reader.parse((iter->second).c_str(), all_config);
 
         if (!pretreatment(all_config)) {
@@ -475,7 +489,6 @@ void UserQuery::parse_noah_config() {
 
         lasso_config = all_config["filter_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
-        //real_config = all_config["jobArray"][1]["filter_list"];
         //cout << offline_config << endl;
         //cout << all_config << endl;
 

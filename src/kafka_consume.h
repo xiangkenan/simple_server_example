@@ -8,7 +8,6 @@
 #include <getopt.h>
 #include <csignal>
 #include <iostream>
-#include <glog/logging.h>
 
 #include "rdkafkacpp.h"
 #include "userquery.h"
