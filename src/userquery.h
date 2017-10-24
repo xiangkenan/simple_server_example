@@ -85,7 +85,9 @@ class UserQuery {
         std::string base_value; //基数 资源
         std::string base_choose_value; //基数 选择
 
-        std::map<std::string, std::string> all_json;
+        std::map<std::string, std::string> all_json; //离线noah 配置
+
+ //       std::map<std::string, std::string> realtime_data; //实时redis数据
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;

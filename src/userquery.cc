@@ -404,6 +404,23 @@ bool UserQuery::HandleProcess() {
                     flag_hit = -1;
                     break;
                 }
+            } else if (offline_config_map[iter->first][i].filter_id == "offline.orders") {
+                map<string, string> realtime_data;
+                time_t timep;
+                struct tm p;
+                time(&timep);
+                FastSecondToDate(timep, &p, 8);
+                string date_now = to_string(p.tm_year+1900)+to_string(p.tm_mon+1)+to_string(p.tm_mday);
+                //redis_user_trigger_config->HGetAll("crm_"+uid+date_now, &realtime_data);
+                redis_user_trigger_config->HGetAll("crm_realtime_507185_20171018", &realtime_data);
+                if (!realtime_data.empty()) {
+                    for (map<string, string>::iterator iter = realtime_data.begin(); iter != realtime_data.end(); ++iter) {
+                        cout << uid << endl;
+                        //cout << iter->first << ":" << iter->second << endl;
+                    }
+                }
+                flag_hit = -1;
+                break;
             }
         }
 
@@ -573,7 +590,7 @@ bool UserQuery::Parse(string behaver_message) {
     for (unsigned int i =0; i < user_json["content"].size(); ++i) {
         if (user_json["content"][i]["action"].asString() == "AppLaunch_Manner_00192") {
             action = "appstart";
-        } else if (user_json["content"][i]["action"].asString() == "Visitor_click__00215" && user_json["content"][i]["params"]["more"]["click"].asString() == "start") {
+        } else if (user_json["content"][i]["action"].asString() == "HomepageClick_ofo_00010" && user_json["content"][i]["params"]["more"]["click"].asString() == "StartButton") {
             action = "appscan";
         } else {
             continue;
