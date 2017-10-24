@@ -406,11 +406,7 @@ bool UserQuery::HandleProcess() {
                 }
             } else if (offline_config_map[iter->first][i].filter_id == "offline.orders") {
                 map<string, string> realtime_data;
-                time_t timep;
-                struct tm p;
-                time(&timep);
-                FastSecondToDate(timep, &p, 8);
-                string date_now = to_string(p.tm_year+1900)+to_string(p.tm_mon+1)+to_string(p.tm_mday);
+                string date_now = get_now_date();
                 //redis_user_trigger_config->HGetAll("crm_"+uid+date_now, &realtime_data);
                 redis_user_trigger_config->HGetAll("crm_realtime_507185_20171018", &realtime_data);
                 if (!realtime_data.empty()) {
@@ -433,33 +429,6 @@ bool UserQuery::HandleProcess() {
 
     LOG(INFO) << log_str;
     return false;
-}
-
-int UserQuery::FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone)
-{
-    static const int kHoursInDay = 24;
-    static const int kMinutesInHour = 60;
-    static const int kDaysFromUnixTime = 2472632;
-    static const int kDaysFromYear = 153;
-    static const int kMagicUnkonwnFirst = 146097;
-    static const int kMagicUnkonwnSec = 1461;
-    tm->tm_sec  =  unix_sec % kMinutesInHour;
-    int i      = (unix_sec/kMinutesInHour);
-    tm->tm_min  = i % kMinutesInHour; //nn
-    i /= kMinutesInHour;
-    tm->tm_hour = (i + time_zone) % kHoursInDay; // hh
-    tm->tm_mday = (i + time_zone) / kHoursInDay;
-    int a = tm->tm_mday + kDaysFromUnixTime;
-    int b = (a*4  + 3)/kMagicUnkonwnFirst;
-    int c = (-b*kMagicUnkonwnFirst)/4 + a;
-    int d =((c*4 + 3) / kMagicUnkonwnSec);
-    int e = -d * kMagicUnkonwnSec;
-    e = e/4 + c;
-    int m = (5*e + 2)/kDaysFromYear;
-    tm->tm_mday = -(kDaysFromYear * m + 2)/5 + e + 1;
-    tm->tm_mon = (-m/10)*12 + m + 2;
-    tm->tm_year = b*100 + d  - 6700 + (m/10);
-    return 0;
 }
 
 bool UserQuery::FreshTriggerConfig() {

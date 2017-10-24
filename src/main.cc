@@ -63,6 +63,7 @@ int main(int argc, char **argv){
     signal(SIGTERM, sigterm);
     signal(SIGKILL, sigterm);
     signal(SIGFPE, sigterm);
+    get_now_date();
 
     pthread_t id[THREAD_COUNT];
 

@@ -15,6 +15,7 @@ kafka_consumer_client::kafka_consumer_client(){}
 kafka_consumer_client::~kafka_consumer_client(){}
 
 bool kafka_consumer_client::initClient(){
+    get_now_date();
     user_query = new UserQuery();
     if(!user_query->Init()) {
         fprintf(stderr, "redis init error\n");
