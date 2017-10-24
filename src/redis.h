@@ -85,9 +85,11 @@ class Redis {
             return false;
         }
 
-        for (int i = 0; (reply->element)[i] != NULL; i += 2) {
-            value->insert(std::pair<std::string, std::string>((reply->element)[i]->str, (reply->element)[i+1]->str));
-            //value[(reply->element)[i]->str] = (reply->element)[i+1]->str;
+        if (reply->element != NULL) {
+            for (int i = 0; (reply->element)[i] != NULL; i += 2) {
+                value->insert(std::pair<std::string, std::string>((reply->element)[i]->str, (reply->element)[i+1]->str));
+                //value[(reply->element)[i]->str] = (reply->element)[i+1]->str;
+            }
         }
         freeReplyObject(reply);
 

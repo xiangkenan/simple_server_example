@@ -36,7 +36,7 @@ class UserQuery {
         bool Parse(std::string behaver_message);
         void parse_noah_config();
         bool FreshTriggerConfig();
-        bool data_core_operate(const BaseConfig& config, Json::Value user_msg_json, int flag);
+        bool data_core_operate(const BaseConfig& config, int flag);
 
         bool get_url(const char *url, char *buf, int size, long timeout_ms, const char *cookie, const char *token);
         bool write_log(std::string msg, bool flag);
@@ -69,7 +69,8 @@ class UserQuery {
 
         Redis *redis_userid;
         Redis *redis_user_trigger_config;
-        Redis *redis_user_offline_data;
+        Redis *redis_user_offline_data; 
+        Json::Value offline_data_json; //用户离线数据
         Redis *redis_user_realtime_data;
 
         std::string uid; //用户uid

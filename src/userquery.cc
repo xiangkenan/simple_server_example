@@ -139,6 +139,8 @@ bool UserQuery::is_include(const BaseConfig& config, string user_msg) {
     } else {
         for (unsigned int i = 0; i < user_msg_vec.size(); ++i){
             for (unsigned int j = 0; j < config.values.size(); ++j) {
+                string a = user_msg_vec[i];
+                string b = config.values[j];
                 if (user_msg_vec[i] == config.values[j]) {
                     flag = 1;
                 }
@@ -267,8 +269,8 @@ bool UserQuery::is_satisfied_value(const BaseConfig& config, string user_msg) {
  * 5:满足大于，小于，范围
  * 6:是否符合其中一种情况
 */
-bool UserQuery::data_core_operate(const BaseConfig& config, Json::Value user_msg_json, int flag) {
-    string user_msg = user_msg_json["rv"][redis_field_map[config.filter_id]].asString();
+bool UserQuery::data_core_operate(const BaseConfig& config, int flag) {
+    string user_msg = offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
     bool ret;
     switch (flag) {
         case 1:
@@ -301,89 +303,91 @@ bool UserQuery::data_core_operate(const BaseConfig& config, Json::Value user_msg
 bool UserQuery::HandleProcess() {
     //get 用户数据
     string user_offline_data;
-    Json::Value offline_data_json;
+    offline_data_json.clear();
 
+    //获取用户离线数据
     redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
     reader.parse(user_offline_data.c_str(), offline_data_json);
 
+    log_str = uid;
     for (map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        log_str += uid + ":|activity:" + iter->first + "=>";
+        log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.size(); ++i) {
             if (iter->second[i].filter_id == "userprofile.city") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 1)) {
+                if(!data_core_operate(iter->second[i], 1)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.competitor") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 1)) {
+                if(!data_core_operate(iter->second[i], 1)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.oauth") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
+                if(!data_core_operate(iter->second[i], 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.bond") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
+                if(!data_core_operate(iter->second[i], 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.recharge") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
+                if(!data_core_operate(iter->second[i], 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.device") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 2)) {
+                if(!data_core_operate(iter->second[i], 2)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.reg_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
+                if(!data_core_operate(iter->second[i], 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.auth_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
+                if(!data_core_operate(iter->second[i], 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.first_order_time") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 3)) {
+                if(!data_core_operate(iter->second[i], 3)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.order") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
+                if(!data_core_operate(iter->second[i], 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.repair_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
+                if(!data_core_operate(iter->second[i], 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.free_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
+                if(!data_core_operate(iter->second[i], 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.weekday_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
+                if(!data_core_operate(iter->second[i], 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.peak_order") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 4)) {
+                if(!data_core_operate(iter->second[i], 4)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.month_card") {
-                if(!data_core_operate(iter->second[i], offline_data_json, 5)) {
+                if(!data_core_operate(iter->second[i], 5)) {
                     flag_hit = -1;
                     break;
                 }
@@ -395,12 +399,12 @@ bool UserQuery::HandleProcess() {
 
         for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
             if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
-                if(!data_core_operate(offline_config_map[iter->first][i], offline_data_json, 1)) {
+                if(!data_core_operate(offline_config_map[iter->first][i], 1)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (offline_config_map[iter->first][i].filter_id == "realtime.app.action") {
-                if(!data_core_operate(offline_config_map[iter->first][i], offline_data_json, 6)) {
+                if(!data_core_operate(offline_config_map[iter->first][i], 6)) {
                     flag_hit = -1;
                     break;
                 }
@@ -408,10 +412,9 @@ bool UserQuery::HandleProcess() {
                 map<string, string> realtime_data;
                 string date_now = get_now_date();
                 //redis_user_trigger_config->HGetAll("crm_"+uid+date_now, &realtime_data);
-                redis_user_trigger_config->HGetAll("crm_realtime_507185_20171018", &realtime_data);
+                redis_user_trigger_config->HGetAll("crm_realtime_172199327_20171018", &realtime_data);
                 if (!realtime_data.empty()) {
                     for (map<string, string>::iterator iter = realtime_data.begin(); iter != realtime_data.end(); ++iter) {
-                        cout << uid << endl;
                         //cout << iter->first << ":" << iter->second << endl;
                     }
                 }
