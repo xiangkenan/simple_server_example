@@ -21,7 +21,7 @@ CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -l
 
 all: run clean
 
-run: kafka_consume.o main.o userquery.o string_tools.o
+run: kafka_consume.o main.o userquery.o string_tools.o ofo_crm.o
 	${CC} $^ -o $@ ${CFLAG}
 
 main.o:
@@ -35,6 +35,9 @@ kafka_consume.o:
 
 string_tools.o:
 	${CC} -c -o $@ ${SRC}/string_tools.cc ${CFLAG}
+
+ofo_crm.o:
+	${CC} -c -o $@ ${SRC}/ofo_crm.cc ${CFLAG}
 
 clean:
 	rm -fr *.o

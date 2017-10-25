@@ -8,6 +8,7 @@
 #include <jsoncpp/jsoncpp.h>
 #include <stdlib.h>
 #include <murl.h>
+#include <thread>
 
 #include "redis.h"
 #include "string_tools.h"
@@ -26,6 +27,19 @@ class BaseConfig {
         std::vector<std::string> values;
 };
 
+//kafka 数据
+class KafkaData {
+    public:
+        KafkaData():uid(""), action(""), tel(""), log_str("") {
+            offline_data_json.clear();
+        }
+        std::string uid;
+        std::string action;
+        std::string tel;
+        std::string log_str;
+        Json::Value offline_data_json;
+};
+
 class UserQuery {
     public:
         UserQuery();
@@ -33,16 +47,19 @@ class UserQuery {
         bool Init();
         bool Run(std::string behaver_message);
     private:
-        bool HandleProcess();
-        bool Parse(std::string behaver_message);
+        bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config);
+        bool HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData* kafka_data);
+        bool Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, std::string behaver_message, KafkaData* kafka_data);
         void parse_noah_config();
-        bool FreshTriggerConfig();
-        bool SendMessage();
+        bool FreshTriggerConfig(Redis* redis_user_trigger_config);
+        bool SendMessage(KafkaData* kafka_data);
+        void Detect();
 
         bool pretreatment(Json::Value all_config);
-        bool data_core_operate(const BaseConfig& config, int flag);
 
-        bool write_log(std::string msg, bool flag);
+        bool data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data);
+        bool write_log(std::string msg, bool flag, KafkaData* kafka_data);
+
         bool is_include(const BaseConfig& config, std::string user_msg); //包含,不包含类型
         bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
         bool is_time_range(const BaseConfig& config, std::string user_msg); //是否在时间范围内
@@ -50,28 +67,12 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-
-        Redis *redis_userid; //md5,tel redis
-        Redis *redis_user_trigger_config; //noah redis
-
-        Json::Value offline_data_json; //用户离线数据
-
-        std::string uid; //用户uid
-        std::string action;//用户开锁行为
-        std::string tel; //电话
-        std::string log_str; //日志
-
         int pre_trigger_config_min;
         int cur_trigger_config_min;
 
-        Json::Reader reader;
-        Json::FastWriter writer;
-        std::string base_value; //基数 资源
-        std::string base_choose_value; //基数 选择
-
         std::map<std::string, std::string> all_json; //离线noah 配置
 
- //       std::map<std::string, std::string> realtime_data; //实时redis数据
+ //     std::map<std::string, std::string> realtime_data; //实时redis数据
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;

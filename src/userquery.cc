@@ -24,29 +24,46 @@ UserQuery::UserQuery() {
     redis_field_map["offline.silence"] = "1009";
 }
 
+bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
+    if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+        LOG(WARNING) << "connect userid redis failed" ;
+        return false;
+    }
+
+    if (!redis_user_trigger_config->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
+        LOG(WARNING) << "connect user_trigger_config redis failed" ;
+        return false;
+    }
+
+    return true;
+
+}
+
 bool UserQuery::Run(string behaver_message) {
-    log_str = "";
+    KafkaData kafka_data;
 
-    if(!FreshTriggerConfig()) {
+    Redis redis_userid, redis_user_trigger_config;
+
+    if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
         return false;
     }
 
-    if(!Parse(behaver_message)) {
+    if(!Parse_kafka_data(&redis_userid, &redis_user_trigger_config, behaver_message, &kafka_data)) {
         return false;
     }
 
-    if (!HandleProcess()) {
+    if (!HandleProcess(&redis_userid, &redis_user_trigger_config, &kafka_data)) {
         return false;
     }
 
     //发短信
-    SendMessage();
+    SendMessage(&kafka_data);
 
-    LOG(INFO) << log_str;
+    LOG(INFO) << kafka_data.log_str;
     return true;
 }
 
-bool UserQuery::SendMessage() {
+bool UserQuery::SendMessage(KafkaData* kafka_data) {
     int ret;
     char buf[1024];
     string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity,123";
@@ -58,12 +75,12 @@ bool UserQuery::SendMessage() {
     Json::Value result;
     result = get_url_json(buf);
     if (result["code"].asString() == "500") {
-        log_str += "=>:hit_freq: activity full";
+        kafka_data->log_str += "=>:hit_freq: activity full";
         return false;
     }
 
     memset(buf, 0, 1024);
-    url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=user_id,"+ uid;
+    url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=user_id,"+ kafka_data->uid;
     if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
         LOG(WARNING) << "riskmgt interface error";
         return false;
@@ -71,11 +88,11 @@ bool UserQuery::SendMessage() {
 
     result = get_url_json(buf);
     if (result["code"].asString() == "500") {
-        log_str += "=>:hit_freq: userid full";
+        kafka_data->log_str += "=>:hit_freq: userid full";
         return false;
     }
 
-    log_str += "=>send message";
+    kafka_data->log_str += "=>send message";
 
     return true;
 }
@@ -213,12 +230,12 @@ bool UserQuery::is_range_value(const BaseConfig& config, string user_msg) {
     return true;
 }
 
-bool UserQuery::write_log(string msg, bool flag) {
+bool UserQuery::write_log(string msg, bool flag, KafkaData* kafka_data) {
     if (flag == true) {
-        log_str += "&" + msg;
+        kafka_data->log_str += "&" + msg;
     }
     else {
-        log_str += "&no" + msg;
+        kafka_data->log_str += "&no" + msg;
     }
     return flag;
 }
@@ -244,30 +261,30 @@ bool UserQuery::is_satisfied_value(const BaseConfig& config, string user_msg) {
  * 5:满足大于，小于，范围
  * 6:是否符合其中一种情况
 */
-bool UserQuery::data_core_operate(const BaseConfig& config, int flag) {
-    string user_msg = offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
+bool UserQuery::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
+    string user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
     bool ret;
     switch (flag) {
         case 1:
             ret = is_include(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         case 2:
             ret = is_confirm(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         case 3:
             ret = is_time_range(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         case 4:
             ret = is_time_range_value(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         case 5:
             ret = is_range_value(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         case 6:
             ret = is_satisfied_value(config, user_msg);
-            return write_log(config.map_field, ret);
+            return write_log(config.map_field, ret, kafka_data);
         default:
-            log_str += " 未知字段未满足";
+            kafka_data->log_str += " 未知字段未满足";
             return false;
     }
 
@@ -275,94 +292,86 @@ bool UserQuery::data_core_operate(const BaseConfig& config, int flag) {
 }
 
 //1:满足配置 2:不满足配置 -1:出错
-bool UserQuery::HandleProcess() {
-    //get 用户数据
-    string user_offline_data;
-    offline_data_json.clear();
-
-    //获取用户离线数据
-    redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
-    reader.parse(user_offline_data.c_str(), offline_data_json);
-
-    log_str = uid;
+bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData *kafka_data) {
+    kafka_data->log_str = kafka_data->uid;
     for (map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        log_str += "|activity:" + iter->first + "=>";
+        kafka_data->log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.size(); ++i) {
             if (iter->second[i].filter_id == "userprofile.city") {
-                if(!data_core_operate(iter->second[i], 1)) {
+                if(!data_core_operate(iter->second[i], 1, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.competitor") {
-                if(!data_core_operate(iter->second[i], 1)) {
+                if(!data_core_operate(iter->second[i], 1, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.oauth") {
-                if(!data_core_operate(iter->second[i], 2)) {
+                if(!data_core_operate(iter->second[i], 2, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.bond") {
-                if(!data_core_operate(iter->second[i], 2)) {
+                if(!data_core_operate(iter->second[i], 2, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.recharge") {
-                if(!data_core_operate(iter->second[i], 2)) {
+                if(!data_core_operate(iter->second[i], 2, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.device") {
-                if(!data_core_operate(iter->second[i], 2)) {
+                if(!data_core_operate(iter->second[i], 2, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.reg_time") {
-                if(!data_core_operate(iter->second[i], 3)) {
+                if(!data_core_operate(iter->second[i], 3, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.auth_time") {
-                if(!data_core_operate(iter->second[i], 3)) {
+                if(!data_core_operate(iter->second[i], 3, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "userprofile.first_order_time") {
-                if(!data_core_operate(iter->second[i], 3)) {
+                if(!data_core_operate(iter->second[i], 3, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.order") {
-                if(!data_core_operate(iter->second[i], 4)) {
+                if(!data_core_operate(iter->second[i], 4, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.repair_order") {
-                if(!data_core_operate(iter->second[i], 4)) {
+                if(!data_core_operate(iter->second[i], 4, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.free_order") {
-                if(!data_core_operate(iter->second[i], 4)) {
+                if(!data_core_operate(iter->second[i], 4, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.weekday_order") {
-                if(!data_core_operate(iter->second[i], 4)) {
+                if(!data_core_operate(iter->second[i], 4, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.peak_order") {
-                if(!data_core_operate(iter->second[i], 4)) {
+                if(!data_core_operate(iter->second[i], 4, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (iter->second[i].filter_id == "order.month_card") {
-                if(!data_core_operate(iter->second[i], 5)) {
+                if(!data_core_operate(iter->second[i], 5, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
@@ -374,12 +383,12 @@ bool UserQuery::HandleProcess() {
 
         for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
             if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
-                if(!data_core_operate(offline_config_map[iter->first][i], 1)) {
+                if(!data_core_operate(offline_config_map[iter->first][i], 1, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
             } else if (offline_config_map[iter->first][i].filter_id == "realtime.app.action") {
-                if(!data_core_operate(offline_config_map[iter->first][i], 6)) {
+                if(!data_core_operate(offline_config_map[iter->first][i], 6, kafka_data)) {
                     flag_hit = -1;
                     break;
                 }
@@ -401,25 +410,25 @@ bool UserQuery::HandleProcess() {
         if (flag_hit == -1)
             continue;
 
-        log_str += "=>:hit_result: " + iter->first;
+        kafka_data->log_str += "=>:hit_result: " + iter->first;
         return true;
     }
 
-    LOG(INFO) << log_str;
+    LOG(INFO) << kafka_data->log_str;
     return false;
 }
 
-bool UserQuery::FreshTriggerConfig() {
-    time_t timep;
-    struct tm p;
-    time(&timep);
-    FastSecondToDate(timep, &p, 8);
-    cur_trigger_config_min = p.tm_min;
-    //每分钟更新
-    if (cur_trigger_config_min == pre_trigger_config_min) {
-        return true;
-    }
-    pre_trigger_config_min = cur_trigger_config_min;
+bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
+    //time_t timep;
+    //struct tm p;
+    //time(&timep);
+    //FastSecondToDate(timep, &p, 8);
+    //cur_trigger_config_min = p.tm_min;
+    ////每分钟更新
+    //if (cur_trigger_config_min == pre_trigger_config_min) {
+    //    return true;
+    //}
+    //pre_trigger_config_min = cur_trigger_config_min;
 
     //获取noah配置
     redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
@@ -440,6 +449,7 @@ bool UserQuery::pretreatment(Json::Value all_config) {
 
 void UserQuery::parse_noah_config() {
 
+    Json::Reader reader;
     lasso_config_map.clear();
 
     for (map<string, string>::iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
@@ -506,39 +516,54 @@ void UserQuery::parse_noah_config() {
     return;
 }
 
-bool UserQuery::Init() {
-    redis_userid  = new Redis();
-    if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
-        LOG(WARNING) << "connect userid redis failed" ;
-        return false;
-    }
+void UserQuery::Detect() {
+    while(true) {
+        Redis redis_userid, redis_user_trigger_config;
+        if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+            LOG(ERROR) << "redis init error";
+        }
 
-    redis_user_trigger_config = new Redis();
-    if (!redis_user_trigger_config->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
-        LOG(WARNING) << "connect user_trigger_config redis failed" ;
-        return false;
+        if(!FreshTriggerConfig(&redis_user_trigger_config)) {
+            LOG(ERROR) << "init conf error";
+        }
+        sleep(60);
     }
+}
+
+bool UserQuery::Init() {
+    //Redis redis_userid, redis_user_trigger_config;
+    //if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+    //    return false;
+    //}
+
+    //if(!FreshTriggerConfig(&redis_userid, &redis_user_trigger_config)) {
+    //    return false;
+    //}
+
+    std::thread observer(&UserQuery::Detect, this);
+    observer.detach();
 
     return true;
 }
 
 //获取用户uid,action
-bool UserQuery::Parse(string behaver_message) {
+bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
+
+    Json::Reader reader;
+    Json::Value user_json;
 
     if(behaver_message.find("userid\":\"") == string::npos && behaver_message.find("action\":\"") == string::npos) {
         return false;
     }
-
-    Json::Value user_json;
 
     string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6, string::npos);
     json_behaver_message[json_behaver_message.size()-1] = '\0';
     reader.parse(json_behaver_message.c_str(), user_json);
     for (unsigned int i =0; i < user_json["content"].size(); ++i) {
         if (user_json["content"][i]["action"].asString() == "AppLaunch_Manner_00192") {
-            action = "appstart";
+            kafka_data->action = "appstart";
         } else if (user_json["content"][i]["action"].asString() == "HomepageClick_ofo_00010" && user_json["content"][i]["params"]["more"]["click"].asString() == "StartButton") {
-            action = "appscan";
+            kafka_data->action = "appscan";
         } else {
             continue;
         }
@@ -549,25 +574,23 @@ bool UserQuery::Parse(string behaver_message) {
             continue;
         }
 
-        string value;
-        redis_userid->HGet("user_info_"+user_id_md5, "userid", &value);
-        if(value.empty()) {
+        redis_userid->HGet("user_info_"+user_id_md5, "userid", &(kafka_data->uid));
+        if(kafka_data->uid.empty()) {
             continue;
         }
 
-        string value_tel;
-        redis_userid->HGet("user_info_"+user_id_md5, "telephone", &value_tel);
-        if(value_tel.empty()) {
+        redis_userid->HGet("user_info_"+user_id_md5, "telephone", &(kafka_data->tel));
+        if(kafka_data->tel.empty()) {
             continue;
         }
 
-        //赋值用户id,action
-        uid = value;
-        tel = value_tel;
+        //获取用户离线数据
+        string user_offline_data;
+        redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
+        reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
         return true;
     }
 
     return false;
-
 }

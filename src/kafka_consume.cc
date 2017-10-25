@@ -15,11 +15,11 @@ kafka_consumer_client::kafka_consumer_client(){}
 kafka_consumer_client::~kafka_consumer_client(){}
 
 bool kafka_consumer_client::initClient(){
-    user_query = new UserQuery();
-    if(!user_query->Init()) {
-        fprintf(stderr, "redis init error\n");
-        return false;
-    }
+    //user_query = new UserQuery();
+    //if(!user_query->Init()) {
+    //    fprintf(stderr, "redis init error\n");
+    //    return false;
+    //}
 
     RdKafka::Conf *conf = nullptr;
     conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -86,13 +86,13 @@ bool kafka_consumer_client::initClient(){
     return true;
 }
 
-void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
+void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQuery *user_query){
     //UserQuery user_query;
     string behaver_message;
 
     switch(message->err()){
         case RdKafka::ERR__TIMED_OUT:
-            LOG(WARNING) << "ERR__TIMED_OUT";
+            //LOG(WARNING) << "ERR__TIMED_OUT";
             break;
         case RdKafka::ERR_NO_ERROR:
             //printf("%.*s\n\n", 
@@ -119,12 +119,12 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
     }
 }
 
-bool kafka_consumer_client::consume(int timeout_ms){
+bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
     RdKafka::Message *msg = nullptr;
 
     while(run_){
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);
-        consumer(msg, nullptr);
+        consumer(msg, nullptr, user_query);
         kafka_consumer_->poll(0);
         delete msg;
     }
