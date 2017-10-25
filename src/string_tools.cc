@@ -60,3 +60,19 @@ void Split(const std::string& s, const std::string& delim, std::vector<std::stri
         ret->push_back(s.substr(last, index - last));
     }
 }
+
+Json::Value get_url_json(char* buf) {
+    Json::Reader reader;
+    Json::Value result;
+    char * ret_begin = buf + sizeof (uint32_t);
+    char * ret_end = buf + sizeof (uint32_t) + *((uint32_t *) buf);
+    *ret_end = '\0';
+
+    bool rt = reader.parse(ret_begin, ret_end, result);
+    if (!rt) {
+        LOG(WARNING) << "murl_get_url parse failed url";
+        return false;
+    }
+
+    return result;
+}

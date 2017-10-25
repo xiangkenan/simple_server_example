@@ -37,6 +37,9 @@ class UserQuery {
         bool Parse(std::string behaver_message);
         void parse_noah_config();
         bool FreshTriggerConfig();
+        bool SendMessage();
+
+        bool pretreatment(Json::Value all_config);
         bool data_core_operate(const BaseConfig& config, int flag);
 
         bool write_log(std::string msg, bool flag);
@@ -47,20 +50,16 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-        bool SendMessage();
-        bool pretreatment(Json::Value all_config);
-        Json::Value get_url_json(char* buf);
 
-        Redis *redis_userid;
-        Redis *redis_user_trigger_config;
-        Redis *redis_user_offline_data; 
+        Redis *redis_userid; //md5,tel redis
+        Redis *redis_user_trigger_config; //noah redis
+
         Json::Value offline_data_json; //用户离线数据
-        Redis *redis_user_realtime_data;
 
         std::string uid; //用户uid
         std::string action;//用户开锁行为
-        std::string activity; //活动
         std::string tel; //电话
+        std::string log_str; //日志
 
         int pre_trigger_config_min;
         int cur_trigger_config_min;
@@ -77,8 +76,6 @@ class UserQuery {
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;
         std::map<std::string, std::string> redis_field_map;
-
-        std::string log_str;
 };
 
 #endif

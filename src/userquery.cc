@@ -46,25 +46,10 @@ bool UserQuery::Run(string behaver_message) {
     return true;
 }
 
-Json::Value UserQuery::get_url_json(char* buf) {
-    Json::Value result;
-    char * ret_begin = buf + sizeof (uint32_t);
-    char * ret_end = buf + sizeof (uint32_t) + *((uint32_t *) buf);
-    *ret_end = '\0';
-
-    bool rt = reader.parse(ret_begin, ret_end, result);
-    if (!rt) {
-        LOG(WARNING) << "murl_get_url parse failed url";
-        return false;
-    }
-
-    return result;
-}
-
 bool UserQuery::SendMessage() {
     int ret;
     char buf[1024];
-    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity,"+activity;
+    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity,123";
     if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
         LOG(WARNING) << "riskmgt interface error";
         return false;
@@ -429,15 +414,14 @@ bool UserQuery::FreshTriggerConfig() {
     struct tm p;
     time(&timep);
     FastSecondToDate(timep, &p, 8);
-
     cur_trigger_config_min = p.tm_min;
-
+    //每分钟更新
     if (cur_trigger_config_min == pre_trigger_config_min) {
         return true;
     }
-
     pre_trigger_config_min = cur_trigger_config_min;
 
+    //获取noah配置
     redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
 
     parse_noah_config();
@@ -445,6 +429,7 @@ bool UserQuery::FreshTriggerConfig() {
 }
 
 bool UserQuery::pretreatment(Json::Value all_config) {
+    string activity;
     activity = all_config["activityId"].asString();
     if (all_config["status"].asString() != "true") {
         return false;
