@@ -179,16 +179,6 @@ bool UserQuery::is_confirm(const BaseConfig& config, string user_msg) {
     return true;
 }
 
-int UserQuery::distance_time_now(string time_msg) {
-    struct tm tmp_time;
-    strptime(time_msg.c_str(),"%Y-%m-%d %H:%M:%S",&tmp_time);
-    time_t user_time, cur_time;
-    user_time = mktime(&tmp_time);
-    time(&cur_time);
-    int cost = difftime(cur_time, user_time);
-    return cost;
-}
-
 bool UserQuery::is_time_range(const BaseConfig& config, string user_msg) {
     double cost = distance_time_now(user_msg);
     if (config.option_id.find("-7D.") != string::npos) {

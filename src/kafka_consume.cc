@@ -15,7 +15,6 @@ kafka_consumer_client::kafka_consumer_client(){}
 kafka_consumer_client::~kafka_consumer_client(){}
 
 bool kafka_consumer_client::initClient(){
-    get_now_date();
     user_query = new UserQuery();
     if(!user_query->Init()) {
         fprintf(stderr, "redis init error\n");
@@ -105,7 +104,7 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt){
             last_offset_ = message->offset();
             break;
         case RdKafka::ERR__PARTITION_EOF:
-            LOG(WARNING) << "ERR__PARTITION_EOF=>" << last_offset_ << "Reached the end of the queue, offset: ";
+            //LOG(WARNING) << "ERR__PARTITION_EOF=>" << last_offset_ << "Reached the end of the queue, offset: ";
             break;
         case RdKafka::ERR__UNKNOWN_TOPIC:
             LOG(WARNING) << "ERR__UNKNOWN_TOPIC";

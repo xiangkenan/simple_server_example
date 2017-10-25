@@ -12,6 +12,7 @@
 #include "redis.h"
 #include "string_tools.h"
 
+//noah配置结构
 class BaseConfig {
     public:
         BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
@@ -38,7 +39,6 @@ class UserQuery {
         bool FreshTriggerConfig();
         bool data_core_operate(const BaseConfig& config, int flag);
 
-        bool get_url(const char *url, char *buf, int size, long timeout_ms, const char *cookie, const char *token);
         bool write_log(std::string msg, bool flag);
         bool is_include(const BaseConfig& config, std::string user_msg); //包含,不包含类型
         bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
@@ -46,26 +46,10 @@ class UserQuery {
         bool is_time_range_value(const BaseConfig& config, std::string user_msg); //是否在时间范围内,并且满足条件
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
-        int distance_time_now(std::string time_msg); //距离现在多少秒
 
         bool SendMessage();
         bool pretreatment(Json::Value all_config);
         Json::Value get_url_json(char* buf);
-
-        void Split(const std::string& s,
-                const std::string& delim,
-                std::vector<std::string>* ret) {
-            size_t last = 0;
-            size_t index = s.find_first_of(delim, last);
-            while (index != std::string::npos) {
-                ret->push_back(s.substr(last, index - last));
-                last = index + 1;
-                index = s.find_first_of(delim, last);
-            }
-            if (index - last > 0) {
-                ret->push_back(s.substr(last, index - last));
-            }
-        }
 
         Redis *redis_userid;
         Redis *redis_user_trigger_config;
