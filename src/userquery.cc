@@ -93,46 +93,17 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
                 flag_hit = -1;
                 break;
             }
-
-            if (flag_hit == -1)
-                continue;
-
-            //for(unsigned int i = 0; i < offline_config_map[iter->first].size(); ++i) {
-            //    if(offline_config_map[iter->first][i].filter_id == "offline.silence") {
-            //        if(!data_core_operate(offline_config_map[iter->first][i], 1, kafka_data)) {
-            //            flag_hit = -1;
-            //            break;
-            //        }
-            //    } else if (offline_config_map[iter->first][i].filter_id == "realtime.app.action") {
-            //        if(!data_core_operate(offline_config_map[iter->first][i], 6, kafka_data)) {
-            //            flag_hit = -1;
-            //            break;
-            //        }
-            //    } else if (offline_config_map[iter->first][i].filter_id == "offline.orders") {
-            //        map<string, string> realtime_data;
-            //        string date_now = get_now_date();
-            //        //redis_user_trigger_config->HGetAll("crm_"+uid+date_now, &realtime_data);
-            //        redis_user_trigger_config->HGetAll("crm_realtime_172199327_20171018", &realtime_data);
-            //        if (!realtime_data.empty()) {
-            //            for (map<string, string>::iterator iter = realtime_data.begin(); iter != realtime_data.end(); ++iter) {
-            //                //cout << iter->first << ":" << iter->second << endl;
-            //            }
-            //        }
-            //        flag_hit = -1;
-            //        break;
-            //    }
-            //}
-
-            //if (flag_hit == -1)
-            //    continue;
-
-            kafka_data->log_str += "=>:hit_result: " + iter->first;
-            return true;
         }
 
-        LOG(INFO) << kafka_data->log_str;
-        return false;
+        if (flag_hit == -1)
+            continue;
+
+        kafka_data->log_str += "=>:hit_result: " + iter->first;
+        return true;
     }
+
+    LOG(INFO) << kafka_data->log_str;
+    return false;
 }
 
 bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
@@ -159,7 +130,7 @@ void UserQuery::parse_noah_config() {
     lasso_config_map.clear();
 
     for (map<string, string>::iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
-        vector<BaseConfig> lasso_config_set, offline_config_set, real_config_set;
+        vector<BaseConfig> lasso_config_set;
         Json::Value all_config, lasso_config, offline_config;
         reader.parse((iter->second).c_str(), all_config);
 
@@ -172,12 +143,13 @@ void UserQuery::parse_noah_config() {
         //cout << offline_config << endl;
         //cout << all_config << endl;
 
-
         //初始化圈选数据
         for (unsigned int i = 0; i < lasso_config.size(); ++i) {
             BaseConfig base_config;
             base_config.filter_id = lasso_config[i]["filter_id"].asString();
             base_config.option_id = lasso_config[i]["options"]["option_id"].asString();
+            base_config.start = lasso_config[i]["options"]["start"].asString();
+            base_config.end = lasso_config[i]["options"]["end"].asString();
             base_config.value_id = lasso_config[i]["values"]["value_id"].asString();
             if (base_config.value_id.find("LIST_MULTIPLE") != string::npos) {
                 for (unsigned int j = 0; j < lasso_config[i]["values"]["list"].size(); ++j) {
@@ -188,17 +160,17 @@ void UserQuery::parse_noah_config() {
                     base_config.values.push_back(lasso_config[i]["values"]["input"][j].asString());
                 }
             }
-            //base_config.map_field = redis_field_map[base_config.filter_id];
 
             lasso_config_set.push_back(base_config);
         }
-        lasso_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, lasso_config_set));
 
         //初始化圈选数据
         for (unsigned int i = 0; i < offline_config.size(); ++i) {
             BaseConfig base_config;
             base_config.filter_id = offline_config[i]["filter_id"].asString();
             base_config.option_id = offline_config[i]["options"]["option_id"].asString();
+            base_config.start = offline_config[i]["options"]["start"].asString();
+            base_config.end = offline_config[i]["options"]["end"].asString();
             if (base_config.option_id == "")
                 base_config.option_id = "noah_config";
             base_config.value_id = offline_config[i]["values"]["value_id"].asString();
@@ -211,12 +183,11 @@ void UserQuery::parse_noah_config() {
                     base_config.values.push_back(offline_config[i]["values"]["input"][j].asString());
                 }
             }
-            //base_config.map_field = redis_field_map[base_config.filter_id];
 
-            offline_config_set.push_back(base_config);
+            lasso_config_set.push_back(base_config);
         }
-        offline_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, offline_config_set));
 
+        lasso_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, lasso_config_set));
     }
 
     return;
@@ -225,7 +196,6 @@ void UserQuery::parse_noah_config() {
 void UserQuery::Detect() {
     while(true) {
         run_ = false;
-        cout << "haha" << endl;
         sleep(2);
         Redis redis_userid, redis_user_trigger_config;
         if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
@@ -238,7 +208,7 @@ void UserQuery::Detect() {
             continue;
         }
         run_ = true;
-        sleep(10);
+        sleep(60);
     }
 }
 

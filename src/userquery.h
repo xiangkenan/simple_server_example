@@ -15,33 +15,6 @@
 #include "noah_config.h"
 #include "config_struct.h"
 
-//noah配置结构
-//class BaseConfig {
-//    public:
-//        BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
-//            values.clear();
-//        }
-//
-//        std::string filter_id;
-//        std::string option_id;
-//        std::string value_id;
-//        std::string map_field;
-//        std::vector<std::string> values;
-//};
-//
-////kafka 数据
-//class KafkaData {
-//    public:
-//        KafkaData():uid(""), action(""), tel(""), log_str("") {
-//            offline_data_json.clear();
-//        }
-//        std::string uid;
-//        std::string action;
-//        std::string tel;
-//        std::string log_str;
-//        Json::Value offline_data_json;
-//};
-
 class UserQuery {
     public:
         UserQuery();
@@ -75,7 +48,6 @@ class UserQuery {
  //     std::map<std::string, std::string> realtime_data; //实时redis数据
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
-        std::map<std::string, std::vector<BaseConfig>> offline_config_map;
 };
 
 #endif

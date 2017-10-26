@@ -204,6 +204,7 @@ bool NoahConfigRead::is_satisfied_value(const BaseConfig& config, string user_ms
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
     string user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
+
     bool ret;
     switch (flag) {
         case 1:

@@ -3,10 +3,12 @@
 
 class BaseConfig {
     public:
-        BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
+        BaseConfig(): start(""), end(""), filter_id(""), option_id(""), value_id(""), map_field("") {
             values.clear();
         }
 
+        std::string start;
+        std::string end;
         std::string filter_id;
         std::string option_id;
         std::string value_id;
