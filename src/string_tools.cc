@@ -39,6 +39,8 @@ string get_now_date() {
 }
 
 int distance_time_now(std::string time_msg) {
+    if (time_msg == "")
+        return 0;
     struct tm tmp_time;
     strptime(time_msg.c_str(),"%Y-%m-%d %H:%M:%S",&tmp_time);
     time_t user_time, cur_time;

@@ -330,8 +330,19 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
         if (kafka_data->offline_data_json["1006"] != "") {
-            cout << kafka_data->offline_data_json["1006"].asString() << endl;
-            cout << distance_time_now(kafka_data->offline_data_json["1006"].asString()) << endl;
+            kafka_data->offline_data_json["rv"]["1006"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
+        }
+
+        if (kafka_data->offline_data_json["7"] != "") {
+            kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
+        }
+
+        if (kafka_data->offline_data_json["8"] != "") {
+            kafka_data->offline_data_json["rv"]["8"] =  distance_time_now(kafka_data->offline_data_json["rv"]["8"].asString());
+        }
+
+        if (kafka_data->offline_data_json["1008"] != "") {
+            kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
         }
 
         return true;

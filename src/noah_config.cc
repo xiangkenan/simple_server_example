@@ -68,9 +68,6 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
         if (user_msg.find("永安行") != string::npos) 
             user_msg_vec.push_back("16384");
     } else if (config.filter_id == "offline.silence") {
-        user_msg_vec.clear();
-        user_msg = to_string(distance_time_now(user_msg)/86400);
-        user_msg_vec.push_back(user_msg);
         not_contain = "jkashdlk";
     } else {
         return false;
@@ -129,18 +126,20 @@ bool NoahConfigRead::is_confirm(const BaseConfig& config, string user_msg) {
 }
 
 bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
-    double cost = distance_time_now(user_msg);
+    int cost = atoi(user_msg.c_str());
     if (config.option_id.find("-7D.") != string::npos) {
-        if (cost > 604800)
+        if (cost > 86400*7)
             return false;
     } else if (config.option_id.find("-14D.") != string::npos) {
-        if (cost > 1209600)
+        if (cost > 86400*14)
             return false;
     } else if (config.option_id.find("-30D.") != string::npos) {
-        if (cost > 2592000)
+        if (cost > 86400*30)
             return false;
     } else if (config.option_id.find("OPTION_TIME_RANGE") != string::npos) {
-        if (cost > 604800)
+        int start = distance_time_now(config.start);
+        int end = distance_time_now(config.end);
+        if (cost > start || cost < end)
             return false;
     }
 
@@ -198,8 +197,8 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             ret = is_time_range_value(config, user_msg);
             return write_log(config, ret, kafka_data);
         default:
-            kafka_data->log_str += " 未知字段未满足";
-            return false;
+            kafka_data->log_str += "&未知字段:" + config.filter_id;
+            return true;
     }
 
     return true;
