@@ -10,10 +10,10 @@ bool OfoCrm::Run() {
         if (!kafka_consumer_client_->initClient()){
             fprintf(stderr, "kafka server initialize error\n");
         }else{
-            printf("start kafka consumer\n");
+            LOG(INFO) << "start kafka consumer";
             kafka_consumer_client_->consume(1000, &user_query);
         }
-        fprintf(stderr, "kafka consume exit! \n");
+        LOG(INFO) << "kafka consume exit";
     } catch (std::runtime_error &e) {
         printf("catch runtime error: %s\n", e.what());
         //LOG(ERROR) << "catch runtime error:" <<  e.what();

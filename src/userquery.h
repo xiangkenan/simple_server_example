@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <murl.h>
 #include <thread>
+#include <fstream>
+#include <unordered_map>
 
 #include "redis.h"
 #include "string_tools.h"
@@ -26,7 +28,8 @@ class UserQuery {
         bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData* kafka_data);
         bool Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, std::string behaver_message, KafkaData* kafka_data);
-        void parse_noah_config();
+        void parse_noah_config(const std::unordered_map<std::string, std::string>& all_json);
+        bool LoadInitialRangeData();
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);
         bool SendMessage(KafkaData* kafka_data);
         void Detect();
@@ -43,11 +46,16 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-        std::map<std::string, std::string> all_json; //离线noah 配置
+        std::unordered_map<std::string, std::vector<BaseConfig>> lasso_config_map; //noah 配置
+        std::vector<std::string> time_range_file;//时间范围文件名
 
- //     std::map<std::string, std::string> realtime_data; //实时redis数据
-
-        std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin_order;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin1;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin2;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin3;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin4;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin5;
+        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin6;
 };
 
 #endif

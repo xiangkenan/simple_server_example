@@ -24,11 +24,9 @@ class NoahConfigRead {
         bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
         bool is_time_range(const BaseConfig& config, std::string user_msg); //是否在时间范围内
         bool is_time_range_value(const BaseConfig& config, std::string user_msg); //是否在时间范围内,并且满足条件
-        bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
-        bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-        std::map<std::string, std::string> redis_field_map;
-        std::map<std::string, int> type_map_operate;
+        std::unordered_map<std::string, std::string> redis_field_map;
+        std::unordered_map<std::string, int> type_map_operate;
 };
 
 #endif

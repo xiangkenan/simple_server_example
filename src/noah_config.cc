@@ -3,38 +3,45 @@
 using namespace std;
 
 NoahConfigRead::NoahConfigRead() {
+    redis_field_map["offline.silence"] = "1006";
     redis_field_map["userprofile.city"] = "1";
+    redis_field_map["order.month_card"] = "12";
     redis_field_map["userprofile.competitor"] = "2";
     redis_field_map["userprofile.oauth"] = "3";
     redis_field_map["userprofile.bond"] = "4";
     redis_field_map["userprofile.recharge"] = "5";
     redis_field_map["userprofile.device"] = "6";
+
     redis_field_map["userprofile.reg_time"] = "7";
     redis_field_map["userprofile.auth_time"] = "8";
-    redis_field_map["realtime.app.action"] = "20";
     redis_field_map["userprofile.first_order_time"] = "1008";
-    redis_field_map["order.order"] = "1001";
-    redis_field_map["order.repair_order"] = "1002";
-    redis_field_map["order.free_order"] = "1003";
-    redis_field_map["order.weekday_order"] = "1004";
-    redis_field_map["order.peak_order"] = "1005";
-    redis_field_map["offline.silence"] = "1009";
 
+    //redis_field_map["order.order"] = "1001";
+    //redis_field_map["order.repair_order"] = "1002";
+    //redis_field_map["order.free_order"] = "1003";
+    //redis_field_map["order.weekday_order"] = "1004";
+    //redis_field_map["order.peak_order"] = "1005";
+    //redis_field_map["offline.silence"] = "1009";
+
+    type_map_operate["offline.silence"] = 1;
     type_map_operate["userprofile.city"] = 1;
     type_map_operate["userprofile.competitor"] = 1;
+
     type_map_operate["userprofile.oauth"] = 2;
     type_map_operate["userprofile.bond"] = 2;
     type_map_operate["userprofile.recharge"] = 2;
     type_map_operate["userprofile.device"] = 2;
+
     type_map_operate["userprofile.reg_time"] = 3;
     type_map_operate["userprofile.auth_time"] = 3;
     type_map_operate["userprofile.first_order_time"] = 3;
+
     type_map_operate["order.order"] = 4;
     type_map_operate["order.repair_order"] = 4;
     type_map_operate["order.free_order"] = 4;
     type_map_operate["order.weekday_order"] = 4;
     type_map_operate["order.peak_order"] = 4;
-    type_map_operate["offline.silence"] = 1;
+
 }
 
 bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
@@ -66,7 +73,7 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
         user_msg_vec.push_back(user_msg);
         not_contain = "jkashdlk";
     } else {
-        not_contain = ".NOT_IN.";
+        return false;
     }
     
     int flag = 0;
@@ -109,7 +116,7 @@ bool NoahConfigRead::is_confirm(const BaseConfig& config, string user_msg) {
     else if (config.filter_id == "userprofile.device")
         not_contain = "FILTER..device..EQUAL_TO.INT32.OPTION_PARA.2";
     else
-        not_contain = "NOT_EQUAL_TO";
+        return false;
     if (config.option_id.find(not_contain) != string::npos) {
         if (user_msg == "1")
             return false;
@@ -156,20 +163,6 @@ bool NoahConfigRead::is_time_range_value(const BaseConfig& config, string user_m
     return true;
 }
 
-bool NoahConfigRead::is_range_value(const BaseConfig& config, string user_msg) {
-    if (config.option_id.find("GREATER") != string::npos) {
-        if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
-            return false;
-    } else if (config.value_id.find("LESS") != string::npos) {
-        if (atoi(user_msg.c_str()) >= atoi(config.values[0].c_str()))
-            return false;
-    } else if (config.value_id.find("BETWEEN") != string::npos) {
-        if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
-            return false;
-    }
-    return true;
-}
-
 bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data) {
     string msg = redis_field_map[config.filter_id];
     if (flag == true) {
@@ -181,26 +174,11 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
     return flag;
 }
 
-bool NoahConfigRead::is_satisfied_value(const BaseConfig& config, string user_msg) {
-    if (config.filter_id == "realtime.app.action") {
-        if (config.option_id == "app.action.appon") {
-            if (user_msg == "appscan")
-                return false;
-        } else {
-            if (user_msg == "appstart")
-                return false;
-        }
-    }
-    return true;
-}
-
 /* flag参数解释
  * 1：包含， 不包含
  * 2:是， 否
  * 3:当前时间在 某个范围内
  * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件）
- * 5:满足大于，小于，范围
- * 6:是否符合其中一种情况
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
     string user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
@@ -218,12 +196,6 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             return write_log(config, ret, kafka_data);
         case 4:
             ret = is_time_range_value(config, user_msg);
-            return write_log(config, ret, kafka_data);
-        case 5:
-            ret = is_range_value(config, user_msg);
-            return write_log(config, ret, kafka_data);
-        case 6:
-            ret = is_satisfied_value(config, user_msg);
             return write_log(config, ret, kafka_data);
         default:
             kafka_data->log_str += " 未知字段未满足";

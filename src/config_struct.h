@@ -29,4 +29,11 @@ class KafkaData {
         Json::Value offline_data_json;
 };
 
+class TimeRange {
+    public:
+        TimeRange():date(""), num(0) {}
+        std::string date;
+        int num;
+};
+
 #endif

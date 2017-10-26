@@ -4,6 +4,13 @@ using namespace std;
 
 UserQuery::UserQuery() {
     run_ = false;
+
+    time_range_file.push_back("order");
+    time_range_file.push_back("order1");
+    time_range_file.push_back("order2");
+    time_range_file.push_back("order3");
+    time_range_file.push_back("order4");
+    time_range_file.push_back("order5");
 }
 
 bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
@@ -83,12 +90,25 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData *kafka_data) {
     kafka_data->log_str = kafka_data->uid;
     NoahConfigRead noah_config_read;
-    for (map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
+    for (unordered_map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
         kafka_data->log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.size(); ++i) {
+            BaseConfig cc = iter->second[i];
+            //判断app触发条件是否满足
+            if (cc.filter_id == "realtime.app.action") {
+                if ((cc.option_id == "app.action.appon" && kafka_data->action == "appscan") || 
+                        (cc.option_id == "app.action.scan" && kafka_data->action == "appstart")) {
+                    kafka_data->log_str += "&no action";
+                    flag_hit = -1;
+                    break;
+                } else {
+                    kafka_data->log_str += "& action";
+                }
+            }
+
             if (!noah_config_read.Run(iter->second[i], kafka_data)) {
                 flag_hit = -1;
                 break;
@@ -107,29 +127,30 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
 }
 
 bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
+    unordered_map<string, string> all_json;
     //获取noah配置
-    redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
+    redis_user_trigger_config->HGetAll("crm_noah_config_bak", &all_json);
 
-    parse_noah_config();
+    parse_noah_config(all_json);
+
     return true;
 }
 
 bool UserQuery::pretreatment(Json::Value all_config) {
-    string activity;
-    activity = all_config["activityId"].asString();
+    //string activity;
+    //activity = all_config["activityId"].asString();
     if (all_config["status"].asString() != "true") {
         return false;
     }
-
     return true;
 }
 
-void UserQuery::parse_noah_config() {
+void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json) {
 
     Json::Reader reader;
     lasso_config_map.clear();
 
-    for (map<string, string>::iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
+    for (unordered_map<string, string>::const_iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
         vector<BaseConfig> lasso_config_set;
         Json::Value all_config, lasso_config, offline_config;
         reader.parse((iter->second).c_str(), all_config);
@@ -213,8 +234,54 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::Init() {
+    if(!LoadInitialRangeData()) {
+        cout << "init file date error" << endl;
+        return false;
+    }
     std::thread observer(&UserQuery::Detect, this);
     observer.detach();
+
+    return true;
+}
+
+bool UserQuery::LoadInitialRangeData() {
+    for (size_t i = 0; i < time_range_file.size(); ++i) {
+        if (time_range_file[i] == "order") {
+            if(!LoadRangeOriginConfig("./data/order.txt", &time_range_origin_order))
+                return false;
+        } else if (time_range_file[i] == "order1") {
+            if(!LoadRangeOriginConfig("./data/order1.txt", &time_range_origin1))
+                return false;
+        } else if (time_range_file[i] == "order2") {
+            if(!LoadRangeOriginConfig("./data/order2.txt", &time_range_origin2))
+                return false;
+        } else if (time_range_file[i] == "order3") {
+            if(!LoadRangeOriginConfig("./data/order3.txt", &time_range_origin3))
+                return false;
+        } else if (time_range_file[i] == "order4") {
+            if(!LoadRangeOriginConfig("./data/order4.txt", &time_range_origin4))
+                return false;
+        } else if (time_range_file[i] == "order5") {
+            if(!LoadRangeOriginConfig("./data/order5.txt", &time_range_origin5))
+                return false;
+        }
+    }
+
+    //for (unordered_map<string, vector<TimeRange>>::iterator iter = time_range_origin_order.begin(); iter != time_range_origin_order.end(); iter++) {
+    //    if(iter->first != "2453")
+    //        continue;
+
+    //    cout << iter->first << endl;
+    //    for (size_t i = 0; i < iter->second.size(); ++i) {
+    //        cout << iter->second[i].date << ":" << iter->second[i].num << " ";
+    //    }
+    //    cout << endl;
+    //}
+
+    //string start = "000";
+    //string end = "20171010";
+    //cout << "****"  << endl;
+    //cout << get_range_order_num(start, end, time_range_origin_order["2453"]) << endl;
 
     return true;
 }
@@ -261,6 +328,11 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         string user_offline_data;
         redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
+
+        if (kafka_data->offline_data_json["1006"] != "") {
+            cout << kafka_data->offline_data_json["1006"].asString() << endl;
+            cout << distance_time_now(kafka_data->offline_data_json["1006"].asString()) << endl;
+        }
 
         return true;
     }

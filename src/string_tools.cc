@@ -76,3 +76,103 @@ Json::Value get_url_json(char* buf) {
 
     return result;
 }
+
+std::string Trim(std::string s) {
+    if (s.empty()) {
+        return s;
+    }
+
+    s.erase(0, s.find_first_not_of(" \t\n"));
+    s.erase(s.find_last_not_of(" \t\n") + 1);
+    return s;
+}
+
+int time_rang_cmp(TimeRange time_range1, TimeRange time_range2) {
+    return time_range1.date < time_range2.date;
+}
+
+//加载最初配置
+bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::string, std::vector<TimeRange>>* time_range_origin) {
+    ifstream fin(time_range_file);
+    if (!fin) {
+        LOG(ERROR) << "load "<< time_range_file << " failed!!";
+        return false;
+    }
+
+    string line;
+    while (getline(fin, line)) {
+        if ((line = Trim(line)).empty()) {
+            continue;
+        }
+
+        vector<string> line_vec;
+        Split(line, "\t", &line_vec);
+        vector<string> vec;
+        Split(line_vec[1], ",", &vec);
+        vector<TimeRange> time_range_vec;
+        for (size_t i = 0; i < vec.size(); ++i) {
+            vector<string> item_vec;
+            Split(vec[i], ":", &item_vec);
+            if(item_vec.size() != 2)
+                continue;
+
+            TimeRange time_range;
+            time_range.date = item_vec[0];
+            time_range.num = atoi(item_vec[1].c_str());
+            time_range_vec.push_back(time_range);
+        }
+
+        if (time_range_vec.empty())
+            continue;
+
+        sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
+
+        for (size_t i = 1; i < time_range_vec.size(); ++i) {
+            time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
+        }
+
+        time_range_origin->insert(pair<string, vector<TimeRange>>(line_vec[0], time_range_vec));
+    }
+
+    fin.close();
+    return true;
+}
+
+int find_two(const string& date, const std::vector<TimeRange>& time_range_origin, int flag) {
+    int l = 0;
+    int r = time_range_origin.size();
+
+    if (date < time_range_origin[l].date) {
+        return 0;
+    }
+
+    if (date > time_range_origin[r-1].date) {
+        return time_range_origin[r-1].num;
+    }
+
+    while(l < r-1) {
+        int mid = (l + r) / 2;
+        if (time_range_origin[mid].date <= date) {
+            l = mid;
+        } else {
+            r = mid;
+        }
+    }
+
+    if (time_range_origin[l].date == date) {
+        if (flag == 0) {
+            if (l == 0) return 0;
+            return time_range_origin[l-1].num;
+        } else {
+            return time_range_origin[l].num;
+        }
+    } else {
+        return time_range_origin[l].num; 
+    }
+}
+
+int get_range_order_num(const string& start, const string& end, const std::vector<TimeRange>& time_range_origin) {
+    int start_num = find_two(start, time_range_origin, 0);
+    int end_num = find_two(end, time_range_origin, 1);
+    return end_num - start_num;
+}

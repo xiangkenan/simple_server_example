@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <hiredis/hiredis.h>
 #include <glog/logging.h>
@@ -74,7 +75,7 @@ class Redis {
         return true;
     }
 
-    bool HGetAll(const std::string &id, std::map<std::string, std::string> *value) {
+    bool HGetAll(const std::string &id, std::unordered_map<std::string, std::string> *value) {
         value->clear();
         reply = (redisReply*) redisCommand(connect_, "HGETALL %s", id.c_str());
 
