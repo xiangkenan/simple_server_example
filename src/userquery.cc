@@ -161,6 +161,8 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
 
         lasso_config = all_config["filter_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
+        lasso_config = all_config["filters_list"];
+
         //cout << offline_config << endl;
         //cout << all_config << endl;
 
@@ -207,6 +209,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
 
             lasso_config_set.push_back(base_config);
         }
+        cout << lasso_config_set.size() << endl;
 
         lasso_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, lasso_config_set));
     }
