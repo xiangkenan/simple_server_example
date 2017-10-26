@@ -12,33 +12,35 @@
 
 #include "redis.h"
 #include "string_tools.h"
+#include "noah_config.h"
+#include "config_struct.h"
 
 //noah配置结构
-class BaseConfig {
-    public:
-        BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
-            values.clear();
-        }
-
-        std::string filter_id;
-        std::string option_id;
-        std::string value_id;
-        std::string map_field;
-        std::vector<std::string> values;
-};
-
-//kafka 数据
-class KafkaData {
-    public:
-        KafkaData():uid(""), action(""), tel(""), log_str("") {
-            offline_data_json.clear();
-        }
-        std::string uid;
-        std::string action;
-        std::string tel;
-        std::string log_str;
-        Json::Value offline_data_json;
-};
+//class BaseConfig {
+//    public:
+//        BaseConfig():filter_id(""), option_id(""), value_id(""), map_field("") {
+//            values.clear();
+//        }
+//
+//        std::string filter_id;
+//        std::string option_id;
+//        std::string value_id;
+//        std::string map_field;
+//        std::vector<std::string> values;
+//};
+//
+////kafka 数据
+//class KafkaData {
+//    public:
+//        KafkaData():uid(""), action(""), tel(""), log_str("") {
+//            offline_data_json.clear();
+//        }
+//        std::string uid;
+//        std::string action;
+//        std::string tel;
+//        std::string log_str;
+//        Json::Value offline_data_json;
+//};
 
 class UserQuery {
     public:
@@ -46,6 +48,7 @@ class UserQuery {
         ~UserQuery() {};
         bool Init();
         bool Run(std::string behaver_message);
+        bool run_;
     private:
         bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData* kafka_data);
@@ -67,16 +70,12 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-        int pre_trigger_config_min;
-        int cur_trigger_config_min;
-
         std::map<std::string, std::string> all_json; //离线noah 配置
 
  //     std::map<std::string, std::string> realtime_data; //实时redis数据
 
         std::map<std::string, std::vector<BaseConfig>> lasso_config_map;
         std::map<std::string, std::vector<BaseConfig>> offline_config_map;
-        std::map<std::string, std::string> redis_field_map;
 };
 
 #endif

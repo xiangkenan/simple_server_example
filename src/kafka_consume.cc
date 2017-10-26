@@ -123,6 +123,9 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
     RdKafka::Message *msg = nullptr;
 
     while(run_){
+        while (!user_query->run_){
+            sleep(0.1);
+        }
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);
         consumer(msg, nullptr, user_query);
         kafka_consumer_->poll(0);
