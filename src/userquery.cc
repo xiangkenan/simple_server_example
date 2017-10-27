@@ -5,12 +5,12 @@ using namespace std;
 UserQuery::UserQuery() {
     run_ = false;
 
-    time_range_file.push_back("history_order");
-    time_range_file.push_back("repair_order");
-    time_range_file.push_back("free_order");
-    time_range_file.push_back("weekday_order");
-    time_range_file.push_back("peak_order");
-    time_range_file.push_back("bike_failed");
+    time_range_file.push_back("order.order");
+    time_range_file.push_back("order.repair_order");
+    time_range_file.push_back("order.free_order");
+    time_range_file.push_back("order.weekday_order");
+    time_range_file.push_back("order.peak_order");
+    time_range_file.push_back("offline.bikeFailed");
 }
 
 bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
@@ -89,7 +89,8 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData *kafka_data) {
     kafka_data->log_str = kafka_data->uid;
-    NoahConfigRead noah_config_read;
+    //初始化配置操作类
+    NoahConfigRead noah_config_read(time_range_origin);
     for (unordered_map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
@@ -246,24 +247,24 @@ bool UserQuery::Init() {
 }
 
 bool UserQuery::LoadInitialRangeData() {
-    unordered_map<string, vector<TimeRange>> base_vec;
     for (size_t i = 0; i < time_range_file.size(); ++i) {
-        if (time_range_file[i] == "history_order") {
+        unordered_map<string, vector<TimeRange>> base_vec;
+        if (time_range_file[i] == "order.order") {
             if(!LoadRangeOriginConfig("./data/history_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "repair_order") {
+        } else if (time_range_file[i] == "order.repair_order") {
             if(!LoadRangeOriginConfig("./data/repair_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "free_order") {
+        } else if (time_range_file[i] == "order.free_order") {
             if(!LoadRangeOriginConfig("./data/free_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "weekday_order") {
+        } else if (time_range_file[i] == "order.weekday_order") {
             if(!LoadRangeOriginConfig("./data/weekday_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "peak_order") {
+        } else if (time_range_file[i] == "order.peak_order") {
             if(!LoadRangeOriginConfig("./data/peak_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "bike_failed") {
+        } else if (time_range_file[i] == "offline.bikeFailed") {
             if(!LoadRangeOriginConfig("./data/bike_failed.txt", &base_vec))
                 return false;
         }

@@ -46,7 +46,17 @@ string get_add_del_date(long sec) {
     return date_now;
 }
 
-int distance_time_now(std::string time_msg) {
+string date_format_ymd(string date) {
+    struct tm p,tmp_time;
+    time_t cost;
+    strptime(date.c_str(),"%Y-%m-%d %H:%M:%S", &tmp_time);
+    cost = mktime(&tmp_time);
+    FastSecondToDate(cost, &p, 8);
+    string date_now = to_string(p.tm_year+1900) + to_string(p.tm_mon+1) + to_string(p.tm_mday);
+    return date_now;
+}
+
+int distance_time_now(string time_msg) {
     if (time_msg == "")
         return 0;
     struct tm tmp_time;
@@ -58,10 +68,10 @@ int distance_time_now(std::string time_msg) {
     return cost;
 }
 
-void Split(const std::string& s, const std::string& delim, std::vector<std::string>* ret) {
+void Split(const string& s, const string& delim, vector<string>* ret) {
     size_t last = 0;
     size_t index = s.find_first_of(delim, last);
-    while (index != std::string::npos) {
+    while (index != string::npos) {
         ret->push_back(s.substr(last, index - last));
         last = index + 1;
         index = s.find_first_of(delim, last);
@@ -87,7 +97,7 @@ Json::Value get_url_json(char* buf) {
     return result;
 }
 
-std::string Trim(std::string s) {
+string Trim(string s) {
     if (s.empty()) {
         return s;
     }
@@ -102,7 +112,7 @@ int time_rang_cmp(TimeRange time_range1, TimeRange time_range2) {
 }
 
 //加载最初配置
-bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::string, std::vector<TimeRange>>* time_range_origin) {
+bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<TimeRange>>* time_range_origin) {
     ifstream fin(time_range_file);
     if (!fin) {
         LOG(ERROR) << "load "<< time_range_file << " failed!!";
@@ -148,7 +158,7 @@ bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::
     return true;
 }
 
-int find_two(const string& date, const std::vector<TimeRange>& time_range_origin, int flag) {
+int find_two(const string& date, const vector<TimeRange>& time_range_origin, int flag) {
     int l = 0;
     int r = time_range_origin.size();
 
@@ -181,7 +191,10 @@ int find_two(const string& date, const std::vector<TimeRange>& time_range_origin
     }
 }
 
-int get_range_order_num(const string& start, const string& end, const std::vector<TimeRange>& time_range_origin) {
+int get_range_order_num(const string& start, const string& end, const vector<TimeRange>& time_range_origin) {
+    if (time_range_origin.size() == 0) {
+        return 0;
+    }
     int start_num = find_two(start, time_range_origin, 0);
     int end_num = find_two(end, time_range_origin, 1);
     return end_num - start_num;

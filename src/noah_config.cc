@@ -2,7 +2,9 @@
 
 using namespace std;
 
-NoahConfigRead::NoahConfigRead() {
+NoahConfigRead::NoahConfigRead(const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>>& time_range_origin) {
+    time_range_origin_ = time_range_origin;
+
     redis_field_map["offline.silence"] = "1006";
     redis_field_map["userprofile.city"] = "1";
     redis_field_map["order.month_card"] = "12";
@@ -40,6 +42,9 @@ NoahConfigRead::NoahConfigRead() {
     type_map_operate["order.free_order"] = 4;
     type_map_operate["order.weekday_order"] = 4;
     type_map_operate["order.peak_order"] = 4;
+
+    type_map_operate["offline.bikeFailed"] = 5;
+    type_map_operate["offline.orders"] = 5;
 }
 
 bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
@@ -68,9 +73,9 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
     } else if (config.filter_id == "offline.silence") {
         not_contain = "jkashdlk";
     } else {
-        return false;
+        not_contain = ".NOT_IN.";
     }
-    
+
     int flag = 0;
     if (config.option_id.find(not_contain) != string::npos) {
         for (unsigned int i = 0; i < config.values.size(); ++i) {
@@ -144,31 +149,41 @@ bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
     return true;
 }
 
-bool NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kafka_data) {
-    //cout << config.filter_id << config.start << ":" << config.end << endl;
-    string start = get_add_del_date(-7*86400);
+int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kafka_data) {
+    string start;
     string end = get_now_date();
 
     if (config.option_id.find("-7D.") != string::npos) {
-        cout << get_range_order_num(start, end, time_range_origin[config.filter_id]) << endl;
+        start = get_add_del_date(-7*86400);
+    } else if (config.option_id.find("-14D.") != string::npos) {
+        start = get_add_del_date(-14*86400);
+    } else if (config.option_id.find("-30D.") != string::npos) {
+        start = get_add_del_date(-30*86400);
+    } else if (config.option_id.find("OPTION_TIME_RANGE") != string::npos) {
+        start = date_format_ymd(config.start);
+        end = date_format_ymd(config.end);
+    } else {
+        //测试
+        return 2;
     }
 
-    //if (config.value_id.find("GREATER") != string::npos) {
-    //    if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
-    //        return false;
-    //} else if (config.value_id.find("LESS") != string::npos) {
-    //    if (atoi(user_msg.c_str()) >= atoi(config.values[0].c_str()))
-    //        return false;
-    //} else if (config.value_id.find("BETWEEN") != string::npos) {
-    //    if (atoi(user_msg.c_str()) < atoi(config.values[0].c_str()) || atoi(user_msg.c_str()) > atoi(config.values[1].c_str()) )
-    //        return false;
-    //}
 
-    return true;
+    int num = 0;
+    if (config.filter_id == "offline.orders") {
+        num = get_range_order_num(start, end, time_range_origin_["order.order"][kafka_data->uid]) - 
+            get_range_order_num(start, end, time_range_origin_["order.repair_order"][kafka_data->uid]);
+    } else {
+        num = get_range_order_num(start, end, time_range_origin_[config.filter_id][kafka_data->uid]);
+    }
+
+    return num;
 }
 
 bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data) {
     string msg = redis_field_map[config.filter_id];
+    if (msg == "") {
+        msg = config.filter_id;
+    }
     if (flag == true) {
         kafka_data->log_str += "&" + msg;
     }
@@ -178,11 +193,29 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
     return flag;
 }
 
+//判断大小
+bool NoahConfigRead::is_big_small(const BaseConfig& config, int user_msg) {
+    if (config.value_id.find("GREATER") != string::npos) {
+        if (user_msg <= atoi(config.values[0].c_str()))
+            return false;
+    } else if (config.value_id.find("LESS") != string::npos) {
+        if (user_msg >= atoi(config.values[0].c_str()))
+            return false;
+    } else if (config.value_id.find("BETWEEN") != string::npos) {
+        if (user_msg < atoi(config.values[0].c_str()) || user_msg > atoi(config.values[1].c_str()) )
+            return false;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
 /* flag参数解释
  * 1：包含， 不包含
  * 2:是， 否
  * 3:当前时间在 某个范围内
- * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件）
+ * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件） (区间值)
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
     string user_msg;
@@ -201,7 +234,10 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             ret = is_time_range(config, user_msg);
             return write_log(config, ret, kafka_data);
         case 4:
-            ret = is_time_range_value(config, kafka_data);
+            ret = is_big_small(config, is_time_range_value(config, kafka_data));
+            return write_log(config, ret, kafka_data);
+        case 5:
+            ret = is_include(config, to_string(is_time_range_value(config, kafka_data)));
             return write_log(config, ret, kafka_data);
         default:
             kafka_data->log_str += "&未知字段:" + config.filter_id;
@@ -212,5 +248,9 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
+    if (config.filter_id == "offline.register" || 
+            config.filter_id == "realtime.order.action" ||
+            config.filter_id == "realtime.app.action")
+        return true;
     return data_core_operate(config, type_map_operate[config.filter_id], kafka_data);
 }

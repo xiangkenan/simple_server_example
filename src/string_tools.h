@@ -23,5 +23,6 @@ int time_rang_cmp(TimeRange time_range1, TimeRange time_range2);
 bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::string, std::vector<TimeRange>>* time_range_origin);
 int get_range_order_num(const std::string& start, const std::string& end, const std::vector<TimeRange>& time_range_origin);
 int find_two(const std::string& date, const std::vector<TimeRange>& time_range_origin, int flag);
+std::string date_format_ymd(std::string date);
 
 #endif
