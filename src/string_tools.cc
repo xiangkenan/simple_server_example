@@ -38,6 +38,14 @@ string get_now_date() {
     return date_now;
 }
 
+string get_add_del_date(long sec) {
+    struct tm p;
+    time_t cur_time = time(NULL) + sec;
+    FastSecondToDate(cur_time, &p, 8);
+    string date_now = to_string(p.tm_year+1900) + to_string(p.tm_mon+1) + to_string(p.tm_mday);
+    return date_now;
+}
+
 int distance_time_now(std::string time_msg) {
     if (time_msg == "")
         return 0;

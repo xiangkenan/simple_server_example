@@ -23,7 +23,7 @@ class NoahConfigRead {
         bool is_include(const BaseConfig& config, std::string user_msg); //包含,不包含类型
         bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
         bool is_time_range(const BaseConfig& config, std::string user_msg); //是否在时间范围内
-        bool is_time_range_value(const BaseConfig& config, std::string user_msg); //是否在时间范围内,并且满足条件
+        bool is_time_range_value(const BaseConfig& config, KafkaData* kafka_data); //是否在时间范围内,并且满足条件
 
         std::unordered_map<std::string, std::string> redis_field_map;
         std::unordered_map<std::string, int> type_map_operate;

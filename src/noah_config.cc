@@ -16,12 +16,11 @@ NoahConfigRead::NoahConfigRead() {
     redis_field_map["userprofile.auth_time"] = "8";
     redis_field_map["userprofile.first_order_time"] = "1008";
 
-    //redis_field_map["order.order"] = "1001";
-    //redis_field_map["order.repair_order"] = "1002";
-    //redis_field_map["order.free_order"] = "1003";
-    //redis_field_map["order.weekday_order"] = "1004";
-    //redis_field_map["order.peak_order"] = "1005";
-    //redis_field_map["offline.silence"] = "1009";
+    redis_field_map["order.order"] = "1001";
+    redis_field_map["order.repair_order"] = "1002";
+    redis_field_map["order.free_order"] = "1003";
+    redis_field_map["order.weekday_order"] = "1004";
+    redis_field_map["order.peak_order"] = "1005";
 
     type_map_operate["offline.silence"] = 1;
     type_map_operate["userprofile.city"] = 1;
@@ -41,7 +40,6 @@ NoahConfigRead::NoahConfigRead() {
     type_map_operate["order.free_order"] = 4;
     type_map_operate["order.weekday_order"] = 4;
     type_map_operate["order.peak_order"] = 4;
-
 }
 
 bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
@@ -146,18 +144,25 @@ bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
     return true;
 }
 
-bool NoahConfigRead::is_time_range_value(const BaseConfig& config, string user_msg) {
+bool NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kafka_data) {
+    //cout << config.filter_id << config.start << ":" << config.end << endl;
+    string start, end;
 
-    if (config.value_id.find("GREATER") != string::npos) {
-        if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
-            return false;
-    } else if (config.value_id.find("LESS") != string::npos) {
-        if (atoi(user_msg.c_str()) >= atoi(config.values[0].c_str()))
-            return false;
-    } else if (config.value_id.find("BETWEEN") != string::npos) {
-        if (atoi(user_msg.c_str()) < atoi(config.values[0].c_str()) || atoi(user_msg.c_str()) > atoi(config.values[1].c_str()) )
-            return false;
+    if (config.option_id.find("-7D.") != string::npos) {
+        cout << "start:" << get_add_del_date(-7*86400) << endl;
+        cout << "end:" << get_now_date() << endl;
     }
+
+    //if (config.value_id.find("GREATER") != string::npos) {
+    //    if (atoi(user_msg.c_str()) <= atoi(config.values[0].c_str()))
+    //        return false;
+    //} else if (config.value_id.find("LESS") != string::npos) {
+    //    if (atoi(user_msg.c_str()) >= atoi(config.values[0].c_str()))
+    //        return false;
+    //} else if (config.value_id.find("BETWEEN") != string::npos) {
+    //    if (atoi(user_msg.c_str()) < atoi(config.values[0].c_str()) || atoi(user_msg.c_str()) > atoi(config.values[1].c_str()) )
+    //        return false;
+    //}
 
     return true;
 }
@@ -168,7 +173,7 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
         kafka_data->log_str += "&" + msg;
     }
     else {
-        kafka_data->log_str += "&no" + msg;
+        kafka_data->log_str += "&no" + msg + config.filter_id;
     }
     return flag;
 }
@@ -180,7 +185,9 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
  * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件）
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
-    string user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
+    string user_msg;
+    if (flag != 4)
+       user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
 
     bool ret;
     switch (flag) {
@@ -194,7 +201,7 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             ret = is_time_range(config, user_msg);
             return write_log(config, ret, kafka_data);
         case 4:
-            ret = is_time_range_value(config, user_msg);
+            ret = is_time_range_value(config, kafka_data);
             return write_log(config, ret, kafka_data);
         default:
             kafka_data->log_str += "&未知字段:" + config.filter_id;
