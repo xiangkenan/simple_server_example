@@ -5,12 +5,12 @@ using namespace std;
 UserQuery::UserQuery() {
     run_ = false;
 
-    time_range_file.push_back("order");
-    time_range_file.push_back("order1");
-    time_range_file.push_back("order2");
-    time_range_file.push_back("order3");
-    time_range_file.push_back("order4");
-    time_range_file.push_back("order5");
+    time_range_file.push_back("history_order");
+    time_range_file.push_back("repair_order");
+    time_range_file.push_back("free_order");
+    time_range_file.push_back("weekday_order");
+    time_range_file.push_back("peak_order");
+    time_range_file.push_back("bike_failed");
 }
 
 bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
@@ -246,26 +246,29 @@ bool UserQuery::Init() {
 }
 
 bool UserQuery::LoadInitialRangeData() {
+    unordered_map<string, vector<TimeRange>> base_vec;
     for (size_t i = 0; i < time_range_file.size(); ++i) {
-        if (time_range_file[i] == "order") {
-            if(!LoadRangeOriginConfig("./data/order.txt", &time_range_origin_order))
+        if (time_range_file[i] == "history_order") {
+            if(!LoadRangeOriginConfig("./data/history_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "order1") {
-            if(!LoadRangeOriginConfig("./data/order1.txt", &time_range_origin1))
+        } else if (time_range_file[i] == "repair_order") {
+            if(!LoadRangeOriginConfig("./data/repair_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "order2") {
-            if(!LoadRangeOriginConfig("./data/order2.txt", &time_range_origin2))
+        } else if (time_range_file[i] == "free_order") {
+            if(!LoadRangeOriginConfig("./data/free_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "order3") {
-            if(!LoadRangeOriginConfig("./data/order3.txt", &time_range_origin3))
+        } else if (time_range_file[i] == "weekday_order") {
+            if(!LoadRangeOriginConfig("./data/weekday_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "order4") {
-            if(!LoadRangeOriginConfig("./data/order4.txt", &time_range_origin4))
+        } else if (time_range_file[i] == "peak_order") {
+            if(!LoadRangeOriginConfig("./data/peak_order.txt", &base_vec))
                 return false;
-        } else if (time_range_file[i] == "order5") {
-            if(!LoadRangeOriginConfig("./data/order5.txt", &time_range_origin5))
+        } else if (time_range_file[i] == "bike_failed") {
+            if(!LoadRangeOriginConfig("./data/bike_failed.txt", &base_vec))
                 return false;
         }
+        
+        time_range_origin.insert(make_pair(time_range_file[i], base_vec));
     }
 
     //for (unordered_map<string, vector<TimeRange>>::iterator iter = time_range_origin_order.begin(); iter != time_range_origin_order.end(); iter++) {

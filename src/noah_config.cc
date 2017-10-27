@@ -146,11 +146,11 @@ bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
 
 bool NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kafka_data) {
     //cout << config.filter_id << config.start << ":" << config.end << endl;
-    string start, end;
+    string start = get_add_del_date(-7*86400);
+    string end = get_now_date();
 
     if (config.option_id.find("-7D.") != string::npos) {
-        cout << "start:" << get_add_del_date(-7*86400) << endl;
-        cout << "end:" << get_now_date() << endl;
+        cout << get_range_order_num(start, end, time_range_origin[config.filter_id]) << endl;
     }
 
     //if (config.value_id.find("GREATER") != string::npos) {

@@ -49,13 +49,7 @@ class UserQuery {
         std::unordered_map<std::string, std::vector<BaseConfig>> lasso_config_map; //noah 配置
         std::vector<std::string> time_range_file;//时间范围文件名
 
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin_order;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin1;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin2;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin3;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin4;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin5;
-        std::unordered_map<std::string, std::vector<TimeRange>> time_range_origin6;
+        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin;
 };
 
 #endif
