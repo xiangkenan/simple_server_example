@@ -249,8 +249,7 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
     if (config.filter_id == "offline.register" || 
-            config.filter_id == "realtime.order.action" ||
-            config.filter_id == "realtime.app.action")
+            config.filter_id == "realtime.order.action")
         return true;
     return data_core_operate(config, type_map_operate[config.filter_id], kafka_data);
 }

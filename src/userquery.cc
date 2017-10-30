@@ -55,7 +55,7 @@ bool UserQuery::Run(string behaver_message) {
 bool UserQuery::SendMessage(KafkaData* kafka_data) {
     int ret;
     char buf[1024];
-    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity,123";
+    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id;
     if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
         LOG(WARNING) << "riskmgt interface error";
         return false;
@@ -120,6 +120,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
             continue;
 
         kafka_data->log_str += "=>:hit_result: " + iter->first;
+        kafka_data->action_id = iter->first; //赋值action_id
         return true;
     }
 
@@ -271,22 +272,6 @@ bool UserQuery::LoadInitialRangeData() {
         
         time_range_origin.insert(make_pair(time_range_file[i], base_vec));
     }
-
-    //for (unordered_map<string, vector<TimeRange>>::iterator iter = time_range_origin_order.begin(); iter != time_range_origin_order.end(); iter++) {
-    //    if(iter->first != "2453")
-    //        continue;
-
-    //    cout << iter->first << endl;
-    //    for (size_t i = 0; i < iter->second.size(); ++i) {
-    //        cout << iter->second[i].date << ":" << iter->second[i].num << " ";
-    //    }
-    //    cout << endl;
-    //}
-
-    //string start = "000";
-    //string end = "20171010";
-    //cout << "****"  << endl;
-    //cout << get_range_order_num(start, end, time_range_origin_order["2453"]) << endl;
 
     return true;
 }
