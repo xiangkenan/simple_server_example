@@ -6,7 +6,7 @@ NoahConfigRead::NoahConfigRead(const std::unordered_map<std::string, std::unorde
     time_range_origin_ = time_range_origin;
 
     redis_field_map["offline.silence"] = "1006";
-    redis_field_map["userprofile.city"] = "1";
+    redis_field_map["userprofile.city"] = "11";
     redis_field_map["order.month_card"] = "12";
     redis_field_map["userprofile.competitor"] = "2";
     redis_field_map["userprofile.oauth"] = "3";
@@ -24,9 +24,11 @@ NoahConfigRead::NoahConfigRead(const std::unordered_map<std::string, std::unorde
     redis_field_map["order.weekday_order"] = "1004";
     redis_field_map["order.peak_order"] = "1005";
 
+    //字段处理类型
     type_map_operate["offline.silence"] = 1;
     type_map_operate["userprofile.city"] = 1;
     type_map_operate["userprofile.competitor"] = 1;
+    type_map_operate["order.month_card"] = 1;
 
     type_map_operate["userprofile.oauth"] = 2;
     type_map_operate["userprofile.bond"] = 2;
@@ -78,16 +80,16 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
 
     int flag = 0;
     if (config.option_id.find(not_contain) != string::npos) {
-        for (unsigned int i = 0; i < config.values.size(); ++i) {
-            for (unsigned int j =0; j < user_msg_vec.size(); ++j) {
+        for (size_t i = 0; i < config.values.size(); ++i) {
+            for (size_t j =0; j < user_msg_vec.size(); ++j) {
                 if(config.values[i] == user_msg_vec[j])
                     return false;
             }
         }
         return true;
     } else {
-        for (unsigned int i = 0; i < user_msg_vec.size(); ++i){
-            for (unsigned int j = 0; j < config.values.size(); ++j) {
+        for (size_t i = 0; i < user_msg_vec.size(); ++i){
+            for (size_t j = 0; j < config.values.size(); ++j) {
                 string a = user_msg_vec[i];
                 string b = config.values[j];
                 if (user_msg_vec[i] == config.values[j]) {

@@ -179,7 +179,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
                 for (unsigned int j = 0; j < lasso_config[i]["values"]["list"].size(); ++j) {
                     base_config.values.push_back(lasso_config[i]["values"]["list"][j].asString());
                 }
-            } else if (base_config.value_id.find("VALUE_INPUT") != string::npos) {
+            } else if (base_config.value_id.find("VALUE_INPUT") != string::npos || base_config.value_id.find("value.month_card.INPUT") != string::npos) {
                 for (unsigned int j = 0; j < lasso_config[i]["values"]["input"].size(); ++j) {
                     base_config.values.push_back(lasso_config[i]["values"]["input"][j].asString());
                 }
@@ -321,20 +321,24 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
-        if (kafka_data->offline_data_json["1006"] != "") {
+        if (kafka_data->offline_data_json["rv"]["1006"] != "") {
             kafka_data->offline_data_json["rv"]["1006"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
         }
 
-        if (kafka_data->offline_data_json["7"] != "") {
+        if (kafka_data->offline_data_json["rv"]["7"] != "") {
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
         }
 
-        if (kafka_data->offline_data_json["8"] != "") {
+        if (kafka_data->offline_data_json["rv"]["8"] != "") {
             kafka_data->offline_data_json["rv"]["8"] =  distance_time_now(kafka_data->offline_data_json["rv"]["8"].asString());
         }
 
-        if (kafka_data->offline_data_json["1008"] != "") {
+        if (kafka_data->offline_data_json["rv"]["1008"] != "") {
             kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
+        }
+
+        if (kafka_data->offline_data_json["rv"]["12"] != "") {
+            kafka_data->offline_data_json["rv"]["12"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400;
         }
 
         return true;
