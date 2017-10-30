@@ -243,6 +243,10 @@ void UserQuery::Detect() {
         }
 
         run_ = true;
+
+        //dump file
+        DumpDayFIle();
+        
         sleep(60);
     }
 }
