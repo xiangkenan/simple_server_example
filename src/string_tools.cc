@@ -78,8 +78,6 @@ int distance_time_now(string time_msg) {
 }
 
 void Split(const string& s, const string& delim, vector<string>* ret) {
-    if (ret == NULL)
-        return;
     size_t last = 0;
     size_t index = s.find_first_of(delim, last);
     while (index != string::npos) {
@@ -140,7 +138,6 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
         vector<string> line_vec;
         Split(line, "\t", &line_vec);
         vector<string> vec;
-        cout << "kenan: " << line_vec[1] << endl;
         Split(line_vec[1], ",", &vec);
         vector<TimeRange> time_range_vec;
         for (size_t i = 0; i < vec.size(); ++i) {
@@ -160,15 +157,16 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
 
         sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
 
-        for (size_t i = 1; i < time_range_vec.size(); ++i) {
-            time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
-        }
-        
         if ((*time_range_origin).count(line_vec[0]) <= 0) {
+            for (size_t i = 1; i < time_range_vec.size(); ++i) {
+                time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
+            }
+
             time_range_origin->insert(pair<string, vector<TimeRange>>(line_vec[0], time_range_vec));
         } else {
             vector<TimeRange> time_range_vec_last = (*time_range_origin)[line_vec[0]];
             merge_vec(&time_range_vec_last, &time_range_vec);
+            (*time_range_origin)[line_vec[0]] = time_range_vec_last;
         }
     }
 
@@ -181,7 +179,6 @@ void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_r
     if (time_range_vec_last->size() == 0) {
         return;
     }
-    cout << "asd" << endl;
 
     for (size_t i = 0; i < time_range_vec->size(); ++i) {
         if ((*time_range_vec)[i].date <= (*time_range_vec_last)[time_range_vec_last->size()-1].date) {

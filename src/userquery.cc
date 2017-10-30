@@ -6,8 +6,8 @@ UserQuery::UserQuery() {
     run_ = false;
     last_update_increment_date = "0";
 
-    time_range_file.insert(make_pair("order.order", "history_order"));
     time_range_file.insert(make_pair("order.repair_order", "repair_order"));
+    time_range_file.insert(make_pair("order.order", "history_order"));
     time_range_file.insert(make_pair("order.free_order", "free_order"));
     time_range_file.insert(make_pair("order.weekday_order", "weekday_order"));
     time_range_file.insert(make_pair("order.peak_order", "peak_order"));
@@ -248,20 +248,19 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != "19") {
+    if (get_now_hour() != "20") {
         return true;
     }
-
-    if (get_now_date() == last_update_increment_date) {
-        return true;
-    }
-
-    last_update_increment_date = get_now_date();
-    LOG(WARNING) << "start update increment user data.....";
 
     string date = get_now_date();
 
-    cout << date << endl;
+    if (date == last_update_increment_date) {
+        return true;
+    }
+
+    last_update_increment_date = date;
+    LOG(WARNING) << "start update increment user data.....";
+
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
 
@@ -269,7 +268,12 @@ bool UserQuery::UpdateDayIncrement() {
             continue;
         }
 
-        cout << iter->first << endl;
+        //cout << iter->first << endl;
+        //unordered_map<string, vector<TimeRange>> tt = time_range_origin[iter->first];
+        //for (size_t i = 0; i < tt["554345677"].size(); i++) {
+        //    cout << tt["554345677"][i].date << ":" << tt["554345677"][i].num << ",";
+        //}
+        //cout << endl;
     }
 
 
