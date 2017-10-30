@@ -38,6 +38,15 @@ string get_now_date() {
     return date_now;
 }
 
+string get_now_hour() {
+    time_t timep;
+    struct tm p;
+    time(&timep);
+    FastSecondToDate(timep, &p, 8);
+    string date_now = to_string(p.tm_hour);
+    return date_now;
+}
+
 string get_add_del_date(long sec) {
     struct tm p;
     time_t cur_time = time(NULL) + sec;
@@ -69,6 +78,8 @@ int distance_time_now(string time_msg) {
 }
 
 void Split(const string& s, const string& delim, vector<string>* ret) {
+    if (ret == NULL)
+        return;
     size_t last = 0;
     size_t index = s.find_first_of(delim, last);
     while (index != string::npos) {
@@ -111,7 +122,8 @@ int time_rang_cmp(TimeRange time_range1, TimeRange time_range2) {
     return time_range1.date < time_range2.date;
 }
 
-//加载最初配置
+//flag:0 加载最初配置
+//flag:1 更行每天增量
 bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<TimeRange>>* time_range_origin) {
     ifstream fin(time_range_file);
     if (!fin) {
@@ -128,6 +140,7 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
         vector<string> line_vec;
         Split(line, "\t", &line_vec);
         vector<string> vec;
+        cout << "kenan: " << line_vec[1] << endl;
         Split(line_vec[1], ",", &vec);
         vector<TimeRange> time_range_vec;
         for (size_t i = 0; i < vec.size(); ++i) {
@@ -150,12 +163,34 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
         for (size_t i = 1; i < time_range_vec.size(); ++i) {
             time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
         }
-
-        time_range_origin->insert(pair<string, vector<TimeRange>>(line_vec[0], time_range_vec));
+        
+        if ((*time_range_origin).count(line_vec[0]) <= 0) {
+            time_range_origin->insert(pair<string, vector<TimeRange>>(line_vec[0], time_range_vec));
+        } else {
+            vector<TimeRange> time_range_vec_last = (*time_range_origin)[line_vec[0]];
+            merge_vec(&time_range_vec_last, &time_range_vec);
+        }
     }
 
     fin.close();
     return true;
+}
+
+void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_range_vec) {
+
+    if (time_range_vec_last->size() == 0) {
+        return;
+    }
+    cout << "asd" << endl;
+
+    for (size_t i = 0; i < time_range_vec->size(); ++i) {
+        if ((*time_range_vec)[i].date <= (*time_range_vec_last)[time_range_vec_last->size()-1].date) {
+            continue;
+        }
+
+        (*time_range_vec)[i].num += (*time_range_vec_last)[time_range_vec_last->size()-1].num;
+        time_range_vec_last->push_back((*time_range_vec)[i]);
+    }
 }
 
 int find_two(const string& date, const vector<TimeRange>& time_range_origin, int flag) {

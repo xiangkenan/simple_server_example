@@ -15,11 +15,6 @@ kafka_consumer_client::kafka_consumer_client(){}
 kafka_consumer_client::~kafka_consumer_client(){}
 
 bool kafka_consumer_client::initClient(){
-    //user_query = new UserQuery();
-    //if(!user_query->Init()) {
-    //    fprintf(stderr, "redis init error\n");
-    //    return false;
-    //}
 
     RdKafka::Conf *conf = nullptr;
     conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -87,7 +82,6 @@ bool kafka_consumer_client::initClient(){
 }
 
 void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQuery *user_query){
-    //UserQuery user_query;
     string behaver_message;
 
     switch(message->err()){
@@ -144,6 +138,6 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
 
     /*销毁kafka实例*/
     RdKafka::wait_destroyed(5000);
-    LOG(INFO) << "已销毁实例";
+    LOG(WARNING) << "已销毁实例";
     return true;
 }

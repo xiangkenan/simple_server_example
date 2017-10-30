@@ -14,6 +14,7 @@
 
 int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
 std::string get_now_date();
+std::string get_now_hour();
 std::string get_add_del_date(long sec);
 int distance_time_now(std::string time_msg); //距离现在多少秒
 void Split(const std::string& s, const std::string& delim, std::vector<std::string>* ret);
@@ -24,5 +25,6 @@ bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::
 int get_range_order_num(const std::string& start, const std::string& end, const std::vector<TimeRange>& time_range_origin);
 int find_two(const std::string& date, const std::vector<TimeRange>& time_range_origin, int flag);
 std::string date_format_ymd(std::string date);
+void merge_vec(std::vector<TimeRange>* time_range_vec_last, std::vector<TimeRange>* time_range_vec);
 
 #endif

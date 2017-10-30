@@ -33,13 +33,11 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < THREAD_COUNT; ++i) {
         pthread_create(&id[i], NULL, run_kafka, (void *)&ofo_crm);
-  //      cout << id[i] << endl;
     }
 
     void *thread_result;
     for (int i = 0; i < THREAD_COUNT; ++i) {
         pthread_join(id[i], &thread_result);
- //       cout << "线程失败:" << id[i] << ";" <<  endl;
     }
 
     return 0;

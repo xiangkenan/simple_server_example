@@ -33,6 +33,7 @@ class UserQuery {
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);
         bool SendMessage(KafkaData* kafka_data);
         void Detect();
+        bool UpdateDayIncrement();
 
         bool pretreatment(Json::Value all_config);
 
@@ -47,9 +48,12 @@ class UserQuery {
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
         std::unordered_map<std::string, std::vector<BaseConfig>> lasso_config_map; //noah 配置
-        std::vector<std::string> time_range_file;//时间范围文件名
+        //std::vector<std::string> time_range_file;//时间范围文件名
+        std::unordered_map<std::string, std::string> time_range_file; //时间范围文件名
 
         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin;
+
+        std::string last_update_increment_date;
 };
 
 #endif

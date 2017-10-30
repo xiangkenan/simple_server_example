@@ -4,13 +4,14 @@ using namespace std;
 
 UserQuery::UserQuery() {
     run_ = false;
+    last_update_increment_date = "0";
 
-    time_range_file.push_back("order.order");
-    time_range_file.push_back("order.repair_order");
-    time_range_file.push_back("order.free_order");
-    time_range_file.push_back("order.weekday_order");
-    time_range_file.push_back("order.peak_order");
-    time_range_file.push_back("offline.bikeFailed");
+    time_range_file.insert(make_pair("order.order", "history_order"));
+    time_range_file.insert(make_pair("order.repair_order", "repair_order"));
+    time_range_file.insert(make_pair("order.free_order", "free_order"));
+    time_range_file.insert(make_pair("order.weekday_order", "weekday_order"));
+    time_range_file.insert(make_pair("order.peak_order", "peak_order"));
+    time_range_file.insert(make_pair("offline.bikeFailed", "bike_failed"));
 }
 
 bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
@@ -223,23 +224,61 @@ void UserQuery::Detect() {
         run_ = false;
         sleep(2);
         Redis redis_userid, redis_user_trigger_config;
+        //初始化redis
         if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
             LOG(ERROR) << "redis init error";
             continue;
         }
 
+        //更新noah配置
         if(!FreshTriggerConfig(&redis_user_trigger_config)) {
             LOG(ERROR) << "init conf error";
             continue;
         }
+
+        //每天增量更新
+        if (!UpdateDayIncrement()) {
+            LOG(ERROR) << "every day update increment failed!";
+            continue;
+        }
+
         run_ = true;
         sleep(60);
     }
 }
 
+bool UserQuery::UpdateDayIncrement() {
+    if (get_now_hour() != "19") {
+        return true;
+    }
+
+    if (get_now_date() == last_update_increment_date) {
+        return true;
+    }
+
+    last_update_increment_date = get_now_date();
+    LOG(WARNING) << "start update increment user data.....";
+
+    string date = get_now_date();
+
+    cout << date << endl;
+    for (unordered_map<string, string>::iterator iter = time_range_file.begin();
+            iter != time_range_file.end(); iter++) {
+
+        if (!LoadRangeOriginConfig("./data/"+iter->second + "_" + date +".txt", &time_range_origin[iter->first])) {
+            continue;
+        }
+
+        cout << iter->first << endl;
+    }
+
+
+    return true;
+}
+
 bool UserQuery::Init() {
     if(!LoadInitialRangeData()) {
-        cout << "init file date error" << endl;
+        LOG(ERROR) << "init file date error" << endl;
         return false;
     }
     std::thread observer(&UserQuery::Detect, this);
@@ -249,29 +288,15 @@ bool UserQuery::Init() {
 }
 
 bool UserQuery::LoadInitialRangeData() {
-    for (size_t i = 0; i < time_range_file.size(); ++i) {
+    for (unordered_map<string, string>::iterator iter = time_range_file.begin();
+            iter != time_range_file.end(); iter++) {
         unordered_map<string, vector<TimeRange>> base_vec;
-        if (time_range_file[i] == "order.order") {
-            if(!LoadRangeOriginConfig("./data/history_order.txt", &base_vec))
-                return false;
-        } else if (time_range_file[i] == "order.repair_order") {
-            if(!LoadRangeOriginConfig("./data/repair_order.txt", &base_vec))
-                return false;
-        } else if (time_range_file[i] == "order.free_order") {
-            if(!LoadRangeOriginConfig("./data/free_order.txt", &base_vec))
-                return false;
-        } else if (time_range_file[i] == "order.weekday_order") {
-            if(!LoadRangeOriginConfig("./data/weekday_order.txt", &base_vec))
-                return false;
-        } else if (time_range_file[i] == "order.peak_order") {
-            if(!LoadRangeOriginConfig("./data/peak_order.txt", &base_vec))
-                return false;
-        } else if (time_range_file[i] == "offline.bikeFailed") {
-            if(!LoadRangeOriginConfig("./data/bike_failed.txt", &base_vec))
-                return false;
+
+        if (!LoadRangeOriginConfig("./data/"+iter->second+".txt", &base_vec)) {
+            return false;
         }
-        
-        time_range_origin.insert(make_pair(time_range_file[i], base_vec));
+
+        time_range_origin.insert(make_pair(iter->first, base_vec));
     }
 
     return true;
@@ -315,6 +340,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
             continue;
         }
 
+        //cout << kafka_data->uid << endl;
         kafka_data->uid = "554345677";
 
         //获取用户离线数据
