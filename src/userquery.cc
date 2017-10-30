@@ -107,6 +107,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
                     break;
                 } else {
                     kafka_data->log_str += "& action";
+                    continue;
                 }
             }
 
