@@ -164,6 +164,12 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
     } else if (config.option_id.find("OPTION_TIME_RANGE") != string::npos) {
         start = date_format_ymd(config.start);
         end = date_format_ymd(config.end);
+    } else if (config.option_id.find("NEAR_DAYS") != string::npos) {
+        if (config.type != "day") {
+            return -1;
+        } else {
+            end = get_add_del_date(config.count*86400*(-1));
+        }
     } else {
         //测试
         return 2;

@@ -64,7 +64,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 
     Json::Value result;
     result = get_url_json(buf);
-    if (result["code"].asString() == "500") {
+    if (result["code"].asString() != "200") {
         kafka_data->log_str += "=>:hit_freq: activity full";
         return false;
     }
@@ -77,7 +77,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
     }
 
     result = get_url_json(buf);
-    if (result["code"].asString() == "500") {
+    if (result["code"].asString() != "200") {
         kafka_data->log_str += "=>:hit_freq: userid full";
         return false;
     }
@@ -92,13 +92,13 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
     kafka_data->log_str = kafka_data->uid;
     //初始化配置操作类
     NoahConfigRead noah_config_read(time_range_origin);
-    for (unordered_map<std::string, vector<BaseConfig>>::iterator iter = lasso_config_map.begin();
+    for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
         kafka_data->log_str += "|activity:" + iter->first + "=>";
-        for(unsigned int i = 0; i < iter->second.size(); ++i) {
-            BaseConfig cc = iter->second[i];
+        for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
+            BaseConfig cc = iter->second.base_config[i];
             //判断app触发条件是否满足
             if (cc.filter_id == "realtime.app.action") {
                 if ((cc.option_id == "app.action.appon" && kafka_data->action == "appscan") || 
@@ -112,7 +112,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
                 }
             }
 
-            if (!noah_config_read.Run(iter->second[i], kafka_data)) {
+            if (!noah_config_read.Run(iter->second.base_config[i], kafka_data)) {
                 flag_hit = -1;
                 break;
             }
@@ -140,12 +140,39 @@ bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
     return true;
 }
 
-bool UserQuery::pretreatment(Json::Value all_config) {
-    //string activity;
-    //activity = all_config["activityId"].asString();
+bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
     if (all_config["status"].asString() != "true") {
         return false;
     }
+
+    Json::Value msg_push_config = all_config["jobArray"][0]["touchUser"];
+    string hour_min_sec = get_now_hour_min_sec();
+    hour_min_sec = "08:13:01";
+
+    for (unsigned int i = 0; i < msg_push_config.size(); ++i) {
+        if(hour_min_sec > msg_push_config[i]["end"].asString() || hour_min_sec < msg_push_config[i]["start"].asString()) {
+            continue;
+        }
+        TelPushMsg tel_push_msg;
+        tel_push_msg.content = msg_push_config[i]["content"].asString();
+        tel_push_msg.jump_url = msg_push_config[i]["jump_url"].asString();
+        tel_push_msg.type = msg_push_config[i]["type"].asString();
+        noah_config->tel_push_msg.push_back(tel_push_msg);
+    }
+
+    //不存在发送短信，push， 不在时间段内则配置无效
+    if (noah_config->tel_push_msg.size() <= 0) {
+        return false;
+    }
+
+    Json::Value tail_number = all_config["jobArray"][0]["jobUid"];
+    for (unsigned int i = 0; i < tail_number.size(); ++i) {
+        noah_config->tail_number.push_back(tail_number[i].asString());
+    }
+
+    noah_config->activity = all_config["activityId"].asString();
+    noah_config->limit = all_config["limit"].asString();
+
     return true;
 }
 
@@ -155,11 +182,12 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
     lasso_config_map.clear();
 
     for (unordered_map<string, string>::const_iterator iter = all_json.begin(); iter != all_json.end(); ++iter) {
-        vector<BaseConfig> lasso_config_set;
+        NoahConfig noah_config;
+
         Json::Value all_config, lasso_config, offline_config;
         reader.parse((iter->second).c_str(), all_config);
 
-        if (!pretreatment(all_config)) {
+        if (!pretreatment(all_config, &noah_config)) {
             continue;
         }
 
@@ -187,7 +215,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
                 }
             }
 
-            lasso_config_set.push_back(base_config);
+            noah_config.base_config.push_back(base_config);
         }
 
         //初始化圈选数据
@@ -195,6 +223,10 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             BaseConfig base_config;
             base_config.filter_id = offline_config[i]["filter_id"].asString();
             base_config.option_id = offline_config[i]["options"]["option_id"].asString();
+            if (base_config.option_id.find("NEAR_DAYS") != string::npos) {
+                base_config.count = offline_config[i]["options"]["count"].asInt();
+                base_config.type = offline_config[i]["options"]["type"].asString();
+            }
             base_config.start = offline_config[i]["options"]["start"].asString();
             base_config.end = offline_config[i]["options"]["end"].asString();
             if (base_config.option_id == "")
@@ -210,10 +242,10 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
                 }
             }
 
-            lasso_config_set.push_back(base_config);
+            noah_config.base_config.push_back(base_config);
         }
 
-        lasso_config_map.insert(pair<string, vector<BaseConfig>>(iter->first, lasso_config_set));
+        lasso_config_map.insert(pair<string, NoahConfig>(iter->first, noah_config));
     }
 
     return;
@@ -245,14 +277,42 @@ void UserQuery::Detect() {
         run_ = true;
 
         //dump file
-        DumpDayFIle();
+        if (!DumpDayFile()) {
+            LOG(ERROR) << "dump file failed!";
+        }
         
         sleep(60);
     }
 }
 
+bool UserQuery::DumpDayFile() {
+    if (get_now_hour() != "11") {
+        return true;
+    }
+
+    string date = get_now_date();
+
+    if (date == dump_file_every_date) {
+        return true;
+    }
+
+    dump_file_every_date = date;
+    LOG(WARNING) << "start dump file :" << date ;
+
+    string dump_path = "mkdir -p ./data/dump/" + date;
+    system(dump_path.c_str());
+    for (unordered_map<std::string, unordered_map<string, vector<TimeRange>>>::iterator iter = time_range_origin.begin();
+            iter != time_range_origin.end(); iter++) {
+        if(!DumpFile("./data/dump/" + date + "/" + time_range_file[iter->first] + ".txt", iter->second)) {
+            LOG(WARNING) << "dump file :" << iter->first << " failed!";
+            continue;
+        }
+    }
+    return true;
+}
+
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != "20") {
+    if (get_now_hour() != "11") {
         return true;
     }
 
@@ -263,7 +323,7 @@ bool UserQuery::UpdateDayIncrement() {
     }
 
     last_update_increment_date = date;
-    LOG(WARNING) << "start update increment user data.....";
+    LOG(WARNING) << "start update increment user data....." << date;
 
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {

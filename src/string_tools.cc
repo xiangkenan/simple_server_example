@@ -47,6 +47,15 @@ string get_now_hour() {
     return date_now;
 }
 
+string get_now_hour_min_sec() {
+    time_t timep;
+    struct tm p;
+    time(&timep);
+    FastSecondToDate(timep, &p, 8);
+    string date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":" + to_string(p.tm_sec);
+    return date_now;
+}
+
 string get_add_del_date(long sec) {
     struct tm p;
     time_t cur_time = time(NULL) + sec;
@@ -118,6 +127,28 @@ string Trim(string s) {
 
 int time_rang_cmp(TimeRange time_range1, TimeRange time_range2) {
     return time_range1.date < time_range2.date;
+}
+
+bool DumpFile(const string& file_name, const unordered_map<string, vector<TimeRange>>& file_data) {
+    string date = get_now_date();
+    ofstream ofile;
+    ofile.open(file_name);
+
+    for (unordered_map<string, vector<TimeRange>>::const_iterator iter = file_data.begin();
+            iter != file_data.end(); iter++) {
+        ofile << iter->first << "\t";
+        for (size_t i = 0; i < iter->second.size(); ++i) {
+            ofile << (iter->second)[i].date << ":" << (iter->second)[i].num;
+            if (i != iter->second.size() - 1) {
+                ofile << ",";
+            }
+        }
+        ofile << endl;
+    }
+
+    ofile.close();
+
+    return true;
 }
 
 //flag:0 加载最初配置

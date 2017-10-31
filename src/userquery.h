@@ -34,8 +34,9 @@ class UserQuery {
         bool SendMessage(KafkaData* kafka_data);
         void Detect();
         bool UpdateDayIncrement();
+        bool DumpDayFile();
 
-        bool pretreatment(Json::Value all_config);
+        bool pretreatment(Json::Value all_config, NoahConfig* noah_config);
 
         bool data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data);
         bool write_log(std::string msg, bool flag, KafkaData* kafka_data);
@@ -47,13 +48,15 @@ class UserQuery {
         bool is_range_value(const BaseConfig& config, std::string user_msg); // 是否大于，小于，范围
         bool is_satisfied_value(const BaseConfig& config, std::string user_msg); //是否满足条件  app行为
 
-        std::unordered_map<std::string, std::vector<BaseConfig>> lasso_config_map; //noah 配置
-        //std::vector<std::string> time_range_file;//时间范围文件名
-        std::unordered_map<std::string, std::string> time_range_file; //时间范围文件名
+        //std::unordered_map<std::string, std::vector<BaseConfig>> lasso_config_map; //noah 配置
+        std::unordered_map<std::string, NoahConfig> lasso_config_map; //noah 配置
+        //noah短信，uid，限制等配置
 
+        std::unordered_map<std::string, std::string> time_range_file; //时间范围文件名
         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin;
 
         std::string last_update_increment_date;
+        std::string dump_file_every_date;
 };
 
 #endif

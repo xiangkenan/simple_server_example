@@ -1,9 +1,20 @@
 #ifndef CONFIG_STRUCT_H_
 #define CONFIG_STRUCT_H_
 
+//noah 短信,push配置
+class TelPushMsg {
+    public:
+        TelPushMsg():content(""), jump_url(""), type("") {}
+
+        std::string content;
+        std::string jump_url;
+        std::string type;
+};
+
+//noah 圈选用户配置
 class BaseConfig {
     public:
-        BaseConfig(): start(""), end(""), filter_id(""), option_id(""), value_id(""), map_field("") {
+        BaseConfig(): start(""), end(""), filter_id(""), option_id(""), value_id(""), map_field(""), type(""), count(0) {
             values.clear();
         }
 
@@ -13,7 +24,25 @@ class BaseConfig {
         std::string option_id;
         std::string value_id;
         std::string map_field;
+        std::string type;
+        int count;
         std::vector<std::string> values;
+};
+
+//Noah所有配置
+class NoahConfig {
+    public:
+        NoahConfig():limit(""), activity("") {
+            base_config.clear();
+            tel_push_msg.clear();
+            tail_number.clear();
+        }
+
+        std::vector<BaseConfig> base_config;
+        std::vector<TelPushMsg> tel_push_msg;
+        std::vector<std::string> tail_number;
+        std::string limit;
+        std::string activity;
 };
 
 //kafka 数据
