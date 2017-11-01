@@ -101,6 +101,8 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
             else
                 flag = 0;
         }
+        if (user_msg_vec.size() == 0)
+            return false;
         return true;
     }
 
@@ -132,13 +134,13 @@ bool NoahConfigRead::is_confirm(const BaseConfig& config, string user_msg) {
 
 bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
     int cost = atoi(user_msg.c_str());
-    if (config.option_id.find("-7D.") != string::npos) {
+    if (config.option_id.find("-7D") != string::npos) {
         if (cost > 86400*7)
             return false;
-    } else if (config.option_id.find("-14D.") != string::npos) {
+    } else if (config.option_id.find("-14D") != string::npos) {
         if (cost > 86400*14)
             return false;
-    } else if (config.option_id.find("-30D.") != string::npos) {
+    } else if (config.option_id.find("-30D") != string::npos) {
         if (cost > 86400*30)
             return false;
     } else if (config.option_id.find("OPTION_TIME_RANGE") != string::npos) {
@@ -164,17 +166,16 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
     } else if (config.option_id.find("OPTION_TIME_RANGE") != string::npos) {
         start = date_format_ymd(config.start);
         end = date_format_ymd(config.end);
-    } else if (config.option_id.find("NEAR_DAYS") != string::npos) {
+    } else if (config.option_id.find("NEAR_TIMES") != string::npos) {
         if (config.type != "day") {
             return -1;
         } else {
-            end = get_add_del_date(config.count*86400*(-1));
+            start = get_add_del_date(config.count*86400*(-1));
         }
     } else {
         //测试
         return 2;
     }
-
 
     int num = 0;
     if (config.filter_id == "offline.orders") {
@@ -183,7 +184,7 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
     } else {
         num = get_range_order_num(start, end, time_range_origin_[config.filter_id][kafka_data->uid]);
     }
-
+    
     return num;
 }
 
@@ -196,7 +197,7 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
         kafka_data->log_str += "&" + msg;
     }
     else {
-        kafka_data->log_str += "&no" + msg + config.filter_id;
+        kafka_data->log_str += "&no" + msg;
     }
     return flag;
 }

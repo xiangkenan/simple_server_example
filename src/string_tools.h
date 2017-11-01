@@ -28,5 +28,6 @@ int get_range_order_num(const std::string& start, const std::string& end, const 
 int find_two(const std::string& date, const std::vector<TimeRange>& time_range_origin, int flag);
 std::string date_format_ymd(std::string date);
 void merge_vec(std::vector<TimeRange>* time_range_vec_last, std::vector<TimeRange>* time_range_vec);
+std::string get_year_mon_day_format(std::string year, std::string month, std::string day);
 
 #endif

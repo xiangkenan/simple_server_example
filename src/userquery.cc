@@ -116,11 +116,11 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
             if (cc.filter_id == "realtime.app.action") {
                 if ((cc.option_id == "app.action.appon" && kafka_data->action == "appscan") || 
                         (cc.option_id == "app.action.scan" && kafka_data->action == "appstart")) {
-                    kafka_data->log_str += "&no action";
+                    kafka_data->log_str += "&touch failed";
                     flag_hit = -1;
                     break;
                 } else {
-                    kafka_data->log_str += "& action";
+                    kafka_data->log_str += "&touch success";
                     continue;
                 }
             }
@@ -139,6 +139,9 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
         return true;
     }
 
+    if (lasso_config_map.empty()) {
+        kafka_data->log_str += ">>>>>:config empty";
+    }
     LOG(INFO) << kafka_data->log_str;
     return false;
 }
@@ -146,7 +149,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
 bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
     unordered_map<string, string> all_json;
     //获取noah配置
-    redis_user_trigger_config->HGetAll("crm_noah_config_bak", &all_json);
+    redis_user_trigger_config->HGetAll("crm_noah_config", &all_json);
 
     parse_noah_config(all_json);
 
@@ -160,7 +163,7 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
 
     Json::Value msg_push_config = all_config["jobArray"][0]["touchUser"];
     string hour_min_sec = get_now_hour_min_sec();
-    hour_min_sec = "08:13:01";
+    hour_min_sec = "20:39:57";
 
     for (unsigned int i = 0; i < msg_push_config.size(); ++i) {
         if(hour_min_sec > msg_push_config[i]["end"].asString() || hour_min_sec < msg_push_config[i]["start"].asString()) {
@@ -190,7 +193,6 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
 }
 
 void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json) {
-
     Json::Reader reader;
     lasso_config_map.clear();
 
@@ -236,8 +238,8 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             BaseConfig base_config;
             base_config.filter_id = offline_config[i]["filter_id"].asString();
             base_config.option_id = offline_config[i]["options"]["option_id"].asString();
-            if (base_config.option_id.find("NEAR_DAYS") != string::npos) {
-                base_config.count = offline_config[i]["options"]["count"].asInt();
+            if (base_config.option_id.find("NEAR_TIMES") != string::npos) {
+                base_config.count = atoi(offline_config[i]["options"]["count"].asString().c_str());
                 base_config.type = offline_config[i]["options"]["type"].asString();
             }
             base_config.start = offline_config[i]["options"]["start"].asString();
@@ -447,7 +449,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         }
 
         if (kafka_data->offline_data_json["rv"]["12"] != "") {
-            kafka_data->offline_data_json["rv"]["12"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400;
+            kafka_data->offline_data_json["rv"]["12"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400 + 1;
         }
 
         return true;

@@ -34,7 +34,7 @@ string get_now_date() {
     struct tm p;
     time(&timep);
     FastSecondToDate(timep, &p, 8);
-    string date_now = to_string(p.tm_year+1900) + to_string(p.tm_mon+1) + to_string(p.tm_mday);
+    string date_now = get_year_mon_day_format(to_string(p.tm_year+1900) , to_string(p.tm_mon+1), to_string(p.tm_mday));
     return date_now;
 }
 
@@ -60,8 +60,21 @@ string get_add_del_date(long sec) {
     struct tm p;
     time_t cur_time = time(NULL) + sec;
     FastSecondToDate(cur_time, &p, 8);
-    string date_now = to_string(p.tm_year+1900) + to_string(p.tm_mon+1) + to_string(p.tm_mday);
+    string date_now = get_year_mon_day_format(to_string(p.tm_year+1900) , to_string(p.tm_mon+1), to_string(p.tm_mday));
     return date_now;
+}
+
+string get_year_mon_day_format(string year, string month, string day) {
+    string mm = month;
+    string dd = day;
+    if (month.length() == 1) {
+        mm = "0"+month;
+    }
+    if (day.length() == 1) {
+        dd = "0" + day;
+    }
+
+    return year+mm+dd;
 }
 
 string date_format_ymd(string date) {
@@ -70,7 +83,7 @@ string date_format_ymd(string date) {
     strptime(date.c_str(),"%Y-%m-%d %H:%M:%S", &tmp_time);
     cost = mktime(&tmp_time);
     FastSecondToDate(cost, &p, 8);
-    string date_now = to_string(p.tm_year+1900) + to_string(p.tm_mon+1) + to_string(p.tm_mday);
+    string date_now = get_year_mon_day_format(to_string(p.tm_year+1900) , to_string(p.tm_mon+1), to_string(p.tm_mday));
     return date_now;
 }
 
