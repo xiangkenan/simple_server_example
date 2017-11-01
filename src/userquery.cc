@@ -99,20 +99,18 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
         kafka_data->log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
-            kafka_data->uid = "3242341";
+            //char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
+            //stringstream stream;
+            //stream << char_tail_uid;
+            //string tail_uid = stream.str();
 
-            char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
-            stringstream stream;
-            stream << char_tail_uid;
-            string tail_uid = stream.str();
-
-            vector<string>::iterator ret;
-            ret = find(iter->second.tail_number.begin(), iter->second.tail_number.end(), tail_uid);
-            if (ret == iter->second.tail_number.end()) {
-                kafka_data->log_str += "&no tailuid";
-                flag_hit = -1;
-                break;
-            }
+            //vector<string>::iterator ret;
+            //ret = find(iter->second.tail_number.begin(), iter->second.tail_number.end(), tail_uid);
+            //if (ret == iter->second.tail_number.end()) {
+            //    kafka_data->log_str += "&no tailuid";
+            //    flag_hit = -1;
+            //    break;
+            //}
             BaseConfig cc = iter->second.base_config[i];
             //判断app触发条件是否满足
             if (cc.filter_id == "realtime.app.action") {
