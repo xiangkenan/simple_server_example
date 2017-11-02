@@ -14,13 +14,18 @@ UserQuery::UserQuery() {
     time_range_file.insert(make_pair("offline.bikeFailed", "bike_failed"));
 }
 
-bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
+bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1) {
     if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
         LOG(WARNING) << "connect userid redis failed" ;
         return false;
     }
 
-    if (!redis_user_trigger_config->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
+    if (!redis_user_trigger_config->Connect("10.6.37.54", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+        LOG(WARNING) << "connect user_trigger_config redis failed" ;
+        return false;
+    }
+
+    if (!redis_user_trigger_config1->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
         LOG(WARNING) << "connect user_trigger_config redis failed" ;
         return false;
     }
@@ -32,9 +37,9 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config)
 bool UserQuery::Run(string behaver_message) {
     KafkaData kafka_data;
 
-    Redis redis_userid, redis_user_trigger_config;
+    Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
 
-    if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+    if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
         return false;
     }
 
@@ -160,6 +165,7 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
     if (all_config["status"].asString() != "true") {
         return false;
     }
+    cout << all_config << endl;
 
     Json::Value msg_push_config = all_config["jobArray"][0]["touchUser"];
     string hour_min_sec = get_now_hour_min_sec();
@@ -210,7 +216,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
         offline_config = all_config["jobArray"][0]["filters_list"];
 
         //cout << offline_config << endl;
-        //cout << all_config << endl;
+        cout << all_config << endl;
 
         //初始化圈选数据
         for (unsigned int i = 0; i < lasso_config.size(); ++i) {
@@ -270,15 +276,15 @@ void UserQuery::Detect() {
     while(true) {
         run_ = false;
         sleep(2);
-        Redis redis_userid, redis_user_trigger_config;
+        Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
         //初始化redis
-        if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+        if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
             LOG(ERROR) << "redis init error";
             continue;
         }
 
         //更新noah配置
-        if(!FreshTriggerConfig(&redis_user_trigger_config)) {
+        if(!FreshTriggerConfig(&redis_user_trigger_config1)) {
             LOG(ERROR) << "init conf error";
             continue;
         }
@@ -425,12 +431,14 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
 
         //cout << kafka_data->uid << endl;
         //测试
-        kafka_data->uid = "554345677";
+        //kafka_data->uid = "554345677";
 
         //获取用户离线数据
         string user_offline_data;
-        redis_user_trigger_config->HGet("user_offline_data", "554345677", &user_offline_data);
+        //redis_user_trigger_config->HGet("user_offline_data", kafka_data->uid, &user_offline_data);
+        redis_user_trigger_config->Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
+        //cout <<  kafka_data->offline_data_json << endl;
 
         if (kafka_data->offline_data_json["rv"]["1006"] != "") {
             kafka_data->offline_data_json["rv"]["1006"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
