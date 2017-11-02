@@ -77,7 +77,6 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
             return false;
         } else {
-            cout << result["data"][0]["frequence"][0]["value"] << endl;
             string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
             if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
                 LOG(WARNING) << "riskmgt interface error";
@@ -88,9 +87,14 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
         //开发短信和push
         vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
         for (size_t j = 0; j < tel_push_msg.size(); ++j) {
+            //个性化信息转换
+            replace_all_distinct(tel_push_msg[j].content, "{register.city}", kafka_data->userprofile_city);
+            replace_all_distinct(tel_push_msg[j].content,"{register.days}", kafka_data->register_day);
+            replace_all_distinct(tel_push_msg[j].content,"{accumulate.orders}", kafka_data->order_num);
+
             if (tel_push_msg[i].type == "message") {
-                kafka_data->log_str += "=>(send message to "+kafka_data->uid+":" + 
-                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
+                kafka_data->log_str += "=>(send message to "+kafka_data->tel + ":" + 
+                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+")";
             }
             if (tel_push_msg[i].type == "push") {
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
@@ -418,7 +422,6 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
             continue;
         }
 
-        //string user_id_md5 = behaver_message.substr(behaver_message.find("userid\":\"")+9, 32);
         string user_id_md5 = user_json["content"][i]["userid"].asString();
         if (user_id_md5.size() != 32) {
             continue;
@@ -450,12 +453,21 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
         }
 
+        if (kafka_data->offline_data_json["rv"]["11"] != "") {
+            kafka_data->userprofile_city = kafka_data->offline_data_json["rv"]["11"].asString();
+        }
+
         if (kafka_data->offline_data_json["rv"]["8"] != "") {
             kafka_data->offline_data_json["rv"]["8"] =  distance_time_now(kafka_data->offline_data_json["rv"]["8"].asString());
         }
 
         if (kafka_data->offline_data_json["rv"]["1008"] != "") {
             kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
+            kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["1008"].asString().c_str())/86400);
+        }
+
+        if (kafka_data->offline_data_json["rv"]["1001"] != "") {
+            kafka_data->order_num =  kafka_data->offline_data_json["rv"]["1001"].asString();
         }
 
         if (kafka_data->offline_data_json["rv"]["12"] != "") {

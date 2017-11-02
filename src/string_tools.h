@@ -29,5 +29,6 @@ int find_two(const std::string& date, const std::vector<TimeRange>& time_range_o
 std::string date_format_ymd(std::string date);
 void merge_vec(std::vector<TimeRange>* time_range_vec_last, std::vector<TimeRange>* time_range_vec);
 std::string get_year_mon_day_format(std::string year, std::string month, std::string day);
+std::string& replace_all_distinct(std::string& str,const std::string& old_value,const std::string& new_value);
 
 #endif

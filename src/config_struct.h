@@ -56,6 +56,9 @@ class KafkaData {
         std::string action;
         std::string tel;
         std::string log_str;
+        std::string userprofile_city;
+        std::string register_day;
+        std::string order_num;
         std::vector<std::string> action_id;
         Json::Value offline_data_json;
 };
