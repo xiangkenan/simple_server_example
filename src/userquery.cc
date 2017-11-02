@@ -61,33 +61,43 @@ bool UserQuery::Run(string behaver_message) {
 bool UserQuery::SendMessage(KafkaData* kafka_data) {
     int ret;
     char buf[1024];
-    string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id;
-    if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
-        LOG(WARNING) << "riskmgt interface error";
-        return false;
-    }
 
-    Json::Value result;
-    result = get_url_json(buf);
-    if (result["code"].asString() != "200") {
-        kafka_data->log_str += "=>:hit_freq: activity full";
-        return false;
-    }
+    for (size_t i = 0; i < kafka_data->action_id.size(); ++i) {
+        int limit  = atoi(lasso_config_map[kafka_data->action_id[i]].limit.c_str());
 
-    memset(buf, 0, 1024);
-    url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=user_id,"+ kafka_data->uid;
-    if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
-        LOG(WARNING) << "riskmgt interface error";
-        return false;
-    }
+        string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=activity," + kafka_data->action_id[i];
+        if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+            LOG(WARNING) << "riskmgt interface error";
+            return false;
+        }
 
-    result = get_url_json(buf);
-    if (result["code"].asString() != "200") {
-        kafka_data->log_str += "=>:hit_freq: userid full";
-        return false;
-    }
+        Json::Value result;
+        result = get_url_json(buf);
+        if (limit > atoi(result["data"][0]["frequence"][0]["value"].asString().c_str())) {
+            kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
+            return false;
+        } else {
+            cout << result["data"][0]["frequence"][0]["value"] << endl;
+            string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
+            if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+                LOG(WARNING) << "riskmgt interface error";
+                return false;
+            }
+        }
 
-    kafka_data->log_str += "=>send message";
+        //开发短信和push
+        vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
+        for (size_t j = 0; j < tel_push_msg.size(); ++j) {
+            if (tel_push_msg[i].type == "message") {
+                kafka_data->log_str += "=>(send message to "+kafka_data->uid+":" + 
+                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
+            }
+            if (tel_push_msg[i].type == "push") {
+                kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
+                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
+            }
+        }
+    }
 
     return true;
 }
@@ -104,18 +114,18 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
         kafka_data->log_str += "|activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
-            //char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
-            //stringstream stream;
-            //stream << char_tail_uid;
-            //string tail_uid = stream.str();
+            char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
+            stringstream stream;
+            stream << char_tail_uid;
+            string tail_uid = stream.str();
 
-            //vector<string>::iterator ret;
-            //ret = find(iter->second.tail_number.begin(), iter->second.tail_number.end(), tail_uid);
-            //if (ret == iter->second.tail_number.end()) {
-            //    kafka_data->log_str += "&no tailuid";
-            //    flag_hit = -1;
-            //    break;
-            //}
+            vector<string>::iterator ret;
+            ret = find(iter->second.tail_number.begin(), iter->second.tail_number.end(), tail_uid);
+            if (ret == iter->second.tail_number.end()) {
+                kafka_data->log_str += "&no tailuid";
+                flag_hit = -1;
+                break;
+            }
             BaseConfig cc = iter->second.base_config[i];
             //判断app触发条件是否满足
             if (cc.filter_id == "realtime.app.action") {
@@ -140,15 +150,20 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
             continue;
 
         kafka_data->log_str += "=>:hit_result: " + iter->first;
-        kafka_data->action_id = iter->first; //赋值action_id
-        return true;
+        kafka_data->action_id.push_back(iter->first); //赋值action_id
+        continue;
     }
 
     if (lasso_config_map.empty()) {
         kafka_data->log_str += ">>>>>:config empty";
     }
-    LOG(INFO) << kafka_data->log_str;
-    return false;
+
+    if (kafka_data->action_id.size() > 0) {
+        return true;
+    } else {
+        LOG(INFO) << kafka_data->log_str;
+        return false;
+    }
 }
 
 bool UserQuery::FreshTriggerConfig(Redis* redis_user_trigger_config) {
@@ -166,10 +181,8 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
         return false;
     }
     cout << all_config << endl;
-
     Json::Value msg_push_config = all_config["jobArray"][0]["touchUser"];
     string hour_min_sec = get_now_hour_min_sec();
-    hour_min_sec = "20:39:57";
 
     for (unsigned int i = 0; i < msg_push_config.size(); ++i) {
         if(hour_min_sec > msg_push_config[i]["end"].asString() || hour_min_sec < msg_push_config[i]["start"].asString()) {
@@ -215,8 +228,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
-        //cout << offline_config << endl;
-        cout << all_config << endl;
+        //cout << all_config << endl;
 
         //初始化圈选数据
         for (unsigned int i = 0; i < lasso_config.size(); ++i) {
@@ -307,7 +319,7 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::DumpDayFile() {
-    if (get_now_hour() != "11") {
+    if (get_now_hour() != "02") {
         return true;
     }
 
@@ -333,7 +345,7 @@ bool UserQuery::DumpDayFile() {
 }
 
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != "11") {
+    if (get_now_hour() != "06") {
         return true;
     }
 
@@ -352,13 +364,6 @@ bool UserQuery::UpdateDayIncrement() {
         if (!LoadRangeOriginConfig("./data/"+iter->second + "_" + date +".txt", &time_range_origin[iter->first])) {
             continue;
         }
-
-        //cout << iter->first << endl;
-        //unordered_map<string, vector<TimeRange>> tt = time_range_origin[iter->first];
-        //for (size_t i = 0; i < tt["554345677"].size(); i++) {
-        //    cout << tt["554345677"][i].date << ":" << tt["554345677"][i].num << ",";
-        //}
-        //cout << endl;
     }
 
 
@@ -429,16 +434,13 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
             continue;
         }
 
-        //cout << kafka_data->uid << endl;
         //测试
-        //kafka_data->uid = "554345677";
+        kafka_data->uid = "554345677";
 
         //获取用户离线数据
         string user_offline_data;
-        //redis_user_trigger_config->HGet("user_offline_data", kafka_data->uid, &user_offline_data);
         redis_user_trigger_config->Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
-        //cout <<  kafka_data->offline_data_json << endl;
 
         if (kafka_data->offline_data_json["rv"]["1006"] != "") {
             kafka_data->offline_data_json["rv"]["1006"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;

@@ -48,14 +48,15 @@ class NoahConfig {
 //kafka 数据
 class KafkaData {
     public:
-        KafkaData():uid(""), action(""), tel(""), log_str(""), action_id("") {
+        KafkaData():uid(""), action(""), tel(""), log_str("") {
             offline_data_json.clear();
+            action_id.clear();
         }
         std::string uid;
         std::string action;
         std::string tel;
         std::string log_str;
-        std::string action_id;
+        std::vector<std::string> action_id;
         Json::Value offline_data_json;
 };
 
