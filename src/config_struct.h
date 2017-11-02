@@ -65,8 +65,8 @@ class KafkaData {
 
 class TimeRange {
     public:
-        TimeRange():date(""), num(0) {}
-        std::string date;
+        TimeRange():date(0), num(0) {}
+        int date;
         int num;
 };
 

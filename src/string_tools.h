@@ -22,8 +22,8 @@ void Split(const std::string& s, const std::string& delim, std::vector<std::stri
 Json::Value get_url_json(char* buf);
 std::string Trim(std::string s);
 int time_rang_cmp(TimeRange time_range1, TimeRange time_range2);
-bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<std::string, std::vector<TimeRange>>* time_range_origin);
-bool DumpFile(const std::string& file_name, const std::unordered_map<std::string, std::vector<TimeRange>>& file_data); //dump 文件
+bool LoadRangeOriginConfig(std::string time_range_file, std::unordered_map<long, std::vector<TimeRange>>* time_range_origin);
+bool DumpFile(const std::string& file_name, const std::unordered_map<long, std::vector<TimeRange>>& file_data); //dump 文件
 int get_range_order_num(const std::string& start, const std::string& end, const std::vector<TimeRange>& time_range_origin);
 int find_two(const std::string& date, const std::vector<TimeRange>& time_range_origin, int flag);
 std::string date_format_ymd(std::string date);

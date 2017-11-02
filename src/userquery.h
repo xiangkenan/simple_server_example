@@ -53,7 +53,8 @@ class UserQuery {
         //noah短信，uid，限制等配置
 
         std::unordered_map<std::string, std::string> time_range_file; //时间范围文件名
-        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin;
+        //std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin;
+        std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>> time_range_origin;
 
         std::string last_update_increment_date;
         std::string dump_file_every_date;

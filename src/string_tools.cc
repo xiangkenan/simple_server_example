@@ -142,12 +142,12 @@ int time_rang_cmp(TimeRange time_range1, TimeRange time_range2) {
     return time_range1.date < time_range2.date;
 }
 
-bool DumpFile(const string& file_name, const unordered_map<string, vector<TimeRange>>& file_data) {
+bool DumpFile(const string& file_name, const unordered_map<long, vector<TimeRange>>& file_data) {
     string date = get_now_date();
     ofstream ofile;
     ofile.open(file_name);
 
-    for (unordered_map<string, vector<TimeRange>>::const_iterator iter = file_data.begin();
+    for (unordered_map<long, vector<TimeRange>>::const_iterator iter = file_data.begin();
             iter != file_data.end(); iter++) {
         ofile << iter->first << "\t";
         for (size_t i = 0; i < iter->second.size(); ++i) {
@@ -166,7 +166,7 @@ bool DumpFile(const string& file_name, const unordered_map<string, vector<TimeRa
 
 //flag:0 加载最初配置
 //flag:1 更行每天增量
-bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<TimeRange>>* time_range_origin) {
+bool LoadRangeOriginConfig(string time_range_file, unordered_map<long, vector<TimeRange>>* time_range_origin) {
     ifstream fin(time_range_file);
     if (!fin) {
         LOG(ERROR) << "load "<< time_range_file << " failed!!";
@@ -192,7 +192,7 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
                 continue;
 
             TimeRange time_range;
-            time_range.date = item_vec[0];
+            time_range.date = atoi(item_vec[0].c_str());
             time_range.num = atoi(item_vec[1].c_str());
             time_range_vec.push_back(time_range);
         }
@@ -202,16 +202,17 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
 
         sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
 
-        if ((*time_range_origin).count(line_vec[0]) <= 0) {
+        //if ((*time_range_origin).count(line_vec[0]) <= 0) {
+        if (time_range_origin->find(atol(line_vec[0].c_str())) != time_range_origin->end()) {
             for (size_t i = 1; i < time_range_vec.size(); ++i) {
                 time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
             }
 
-            time_range_origin->insert(pair<string, vector<TimeRange>>(line_vec[0], time_range_vec));
+            time_range_origin->insert(make_pair(atol(line_vec[0].c_str()), time_range_vec));
         } else {
-            vector<TimeRange> time_range_vec_last = (*time_range_origin)[line_vec[0]];
+            vector<TimeRange> time_range_vec_last = (*time_range_origin)[atol(line_vec[0].c_str())];
             merge_vec(&time_range_vec_last, &time_range_vec);
-            (*time_range_origin)[line_vec[0]] = time_range_vec_last;
+            (*time_range_origin)[atol(line_vec[0].c_str())] = time_range_vec_last;
         }
     }
 
@@ -239,25 +240,26 @@ void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_r
 int find_two(const string& date, const vector<TimeRange>& time_range_origin, int flag) {
     int l = 0;
     int r = time_range_origin.size();
+    int date_int = atoi(date.c_str());
 
-    if (date < time_range_origin[l].date) {
+    if (date_int < time_range_origin[l].date) {
         return 0;
     }
 
-    if (date > time_range_origin[r-1].date) {
+    if (date_int > time_range_origin[r-1].date) {
         return time_range_origin[r-1].num;
     }
 
     while(l < r-1) {
         int mid = (l + r) / 2;
-        if (time_range_origin[mid].date <= date) {
+        if (time_range_origin[mid].date <= date_int) {
             l = mid;
         } else {
             r = mid;
         }
     }
 
-    if (time_range_origin[l].date == date) {
+    if (time_range_origin[l].date == date_int) {
         if (flag == 0) {
             if (l == 0) return 0;
             return time_range_origin[l-1].num;

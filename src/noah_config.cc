@@ -2,7 +2,7 @@
 
 using namespace std;
 
-NoahConfigRead::NoahConfigRead(const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>>& time_range_origin) {
+NoahConfigRead::NoahConfigRead(const std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>>& time_range_origin) {
     time_range_origin_ = time_range_origin;
 
     redis_field_map["offline.silence"] = "1006";
@@ -179,10 +179,10 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
 
     int num = 0;
     if (config.filter_id == "offline.orders") {
-        num = get_range_order_num(start, end, time_range_origin_["order.order"][kafka_data->uid]) - 
-            get_range_order_num(start, end, time_range_origin_["order.repair_order"][kafka_data->uid]);
+        num = get_range_order_num(start, end, time_range_origin_["order.order"][atol(kafka_data->uid.c_str())]) - 
+            get_range_order_num(start, end, time_range_origin_["order.repair_order"][atol(kafka_data->uid.c_str())]);
     } else {
-        num = get_range_order_num(start, end, time_range_origin_[config.filter_id][kafka_data->uid]);
+        num = get_range_order_num(start, end, time_range_origin_[config.filter_id][atol(kafka_data->uid.c_str())]);
     }
     
     return num;

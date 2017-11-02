@@ -340,7 +340,7 @@ bool UserQuery::DumpDayFile() {
 
     string dump_path = "mkdir -p ./data/dump/" + date;
     system(dump_path.c_str());
-    for (unordered_map<std::string, unordered_map<string, vector<TimeRange>>>::iterator iter = time_range_origin.begin();
+    for (unordered_map<std::string, unordered_map<long, vector<TimeRange>>>::iterator iter = time_range_origin.begin();
             iter != time_range_origin.end(); iter++) {
         if(!DumpFile("./data/dump/" + date + "/" + time_range_file[iter->first] + ".txt", iter->second)) {
             LOG(WARNING) << "dump file :" << iter->first << " failed!";
@@ -390,7 +390,7 @@ bool UserQuery::Init() {
 bool UserQuery::LoadInitialRangeData() {
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
-        unordered_map<string, vector<TimeRange>> base_vec;
+        unordered_map<long, vector<TimeRange>> base_vec;
 
         if (!LoadRangeOriginConfig("./data/"+iter->second+".txt", &base_vec)) {
             return false;

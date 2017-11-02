@@ -13,7 +13,7 @@
 
 class NoahConfigRead {
     public:
-        NoahConfigRead(const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>>& time_range_origin);
+        NoahConfigRead(const std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>>& time_range_origin);
         ~NoahConfigRead() {};
         bool Run(const BaseConfig& config, KafkaData* kafka_data);
     private:
@@ -29,7 +29,7 @@ class NoahConfigRead {
         std::unordered_map<std::string, std::string> redis_field_map;
         std::unordered_map<std::string, int> type_map_operate;
 
-        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<TimeRange>>> time_range_origin_;
+        std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>> time_range_origin_;
 };
 
 #endif
