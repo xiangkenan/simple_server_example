@@ -203,7 +203,7 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<long, vector<Ti
         sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
 
         //if ((*time_range_origin).count(line_vec[0]) <= 0) {
-        if (time_range_origin->find(atol(line_vec[0].c_str())) != time_range_origin->end()) {
+        if (time_range_origin->find(atol(line_vec[0].c_str())) == time_range_origin->end()) {
             for (size_t i = 1; i < time_range_vec.size(); ++i) {
                 time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
             }

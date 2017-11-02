@@ -73,7 +73,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 
         Json::Value result;
         result = get_url_json(buf);
-        if (limit > atoi(result["data"][0]["frequence"][0]["value"].asString().c_str())) {
+        if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str())) {
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
             return false;
         } else {
@@ -153,7 +153,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
         if (flag_hit == -1)
             continue;
 
-        kafka_data->log_str += "=>:hit_result: " + iter->first;
+        kafka_data->log_str += "=>:regular_ok";
         kafka_data->action_id.push_back(iter->first); //赋值action_id
         continue;
     }
@@ -184,7 +184,6 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
     if (all_config["status"].asString() != "true") {
         return false;
     }
-    cout << all_config << endl;
     Json::Value msg_push_config = all_config["jobArray"][0]["touchUser"];
     string hour_min_sec = get_now_hour_min_sec();
 
@@ -196,7 +195,7 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
         tel_push_msg.content = msg_push_config[i]["content"].asString();
         tel_push_msg.type = msg_push_config[i]["type"].asString();
         if (tel_push_msg.type == "push") {
-            tel_push_msg.jump_url = msg_push_config[i]["jump_url"].asString();
+            tel_push_msg.jump_url = msg_push_config[i]["jumpUrl"].asString();
         }
         noah_config->tel_push_msg.push_back(tel_push_msg);
     }
