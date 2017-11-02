@@ -173,6 +173,7 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
         return false;
     }
 
+    LOG(INFO) << "start loading file:" << time_range_file;
     string line;
     while (getline(fin, line)) {
         if ((line = Trim(line)).empty()) {
@@ -215,6 +216,7 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<string, vector<
     }
 
     fin.close();
+    LOG(INFO) << "load file:" << time_range_file << "complete..";
     return true;
 }
 

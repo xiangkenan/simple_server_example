@@ -93,8 +93,8 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
             replace_all_distinct(tel_push_msg[j].content,"{accumulate.orders}", kafka_data->order_num);
 
             if (tel_push_msg[i].type == "message") {
-                kafka_data->log_str += "=>(send message to "+kafka_data->tel + ":" + 
-                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+")";
+                kafka_data->log_str += "=>(send message to " + kafka_data->tel + ":" + 
+                    tel_push_msg[j].content + ")";
             }
             if (tel_push_msg[i].type == "push") {
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
@@ -194,8 +194,10 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
         }
         TelPushMsg tel_push_msg;
         tel_push_msg.content = msg_push_config[i]["content"].asString();
-        tel_push_msg.jump_url = msg_push_config[i]["jump_url"].asString();
         tel_push_msg.type = msg_push_config[i]["type"].asString();
+        if (tel_push_msg.type == "push") {
+            tel_push_msg.jump_url = msg_push_config[i]["jump_url"].asString();
+        }
         noah_config->tel_push_msg.push_back(tel_push_msg);
     }
 
@@ -323,7 +325,7 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::DumpDayFile() {
-    if (get_now_hour() != "02") {
+    if (get_now_hour() != "05") {
         return true;
     }
 
@@ -349,7 +351,7 @@ bool UserQuery::DumpDayFile() {
 }
 
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != "06") {
+    if (get_now_hour() != "04") {
         return true;
     }
 
