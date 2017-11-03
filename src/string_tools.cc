@@ -290,3 +290,7 @@ string& replace_all_distinct(string& str,const string& old_value,const string& n
     }
     return str;
 }
+
+long get_ms(const struct timeval* ts, const struct timeval* te) {
+    return (te->tv_sec - ts->tv_sec) * 1000000 + (te->tv_usec - ts->tv_usec);
+}

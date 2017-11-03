@@ -34,7 +34,7 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config,
 
 }
 
-bool UserQuery::Run(string behaver_message) {
+bool UserQuery::Run(string behaver_message, string& log_str) {
     KafkaData kafka_data;
 
     Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
@@ -44,17 +44,19 @@ bool UserQuery::Run(string behaver_message) {
     }
 
     if(!Parse_kafka_data(&redis_userid, &redis_user_trigger_config, behaver_message, &kafka_data)) {
+        log_str = kafka_data.log_str;
         return false;
     }
 
     if (!HandleProcess(&redis_userid, &redis_user_trigger_config, &kafka_data)) {
+        log_str = kafka_data.log_str;
         return false;
     }
 
     //发短信
     SendMessage(&kafka_data);
+    log_str = kafka_data.log_str;
 
-    LOG(INFO) << kafka_data.log_str;
     return true;
 }
 
@@ -165,7 +167,6 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
     if (kafka_data->action_id.size() > 0) {
         return true;
     } else {
-        LOG(INFO) << kafka_data->log_str;
         return false;
     }
 }

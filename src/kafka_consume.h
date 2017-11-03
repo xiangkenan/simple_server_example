@@ -12,6 +12,7 @@
 
 #include "rdkafkacpp.h"
 #include "userquery.h"
+#include "string_tools.h"
 
 using namespace std;
 

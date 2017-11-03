@@ -83,6 +83,7 @@ bool kafka_consumer_client::initClient(){
 
 void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQuery *user_query){
     string behaver_message;
+    string log_str;
 
     switch(message->err()){
         case RdKafka::ERR__TIMED_OUT:
@@ -94,7 +95,13 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
             //        static_cast<const char*>(message->payload()));
  //           len = static_cast<int>(message->len());
             behaver_message = static_cast<const char*>(message->payload());
-            user_query->Run(behaver_message);
+            struct timeval start_time, end_time;
+            gettimeofday(&start_time, NULL);
+            user_query->Run(behaver_message, log_str);
+            gettimeofday(&end_time, NULL);
+            if (!log_str.empty()) {
+                LOG(INFO) << log_str << "******:cost-time:" << get_ms(&start_time, &end_time)/1000 << "ms";
+            }
             last_offset_ = message->offset();
             break;
         case RdKafka::ERR__PARTITION_EOF:
