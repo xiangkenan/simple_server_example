@@ -13,6 +13,7 @@
 #include "rdkafkacpp.h"
 #include "userquery.h"
 #include "string_tools.h"
+#include "queue.h"
 
 using namespace std;
 
@@ -22,7 +23,7 @@ class kafka_consumer_client{
         kafka_consumer_client();
         virtual ~kafka_consumer_client();
 
-        bool initClient();
+        bool initClient(QueueKafka* queue_kafka);
         bool consume(int timeout_ms, UserQuery *user_query);
         void finalize();
         static bool run_;
@@ -38,7 +39,7 @@ class kafka_consumer_client{
         RdKafka::Topic *topic_          = nullptr;
         int64_t offset_          = RdKafka::Topic::OFFSET_BEGINNING;
         int32_t partition_ = 0;
-        //UserQuery *user_query;
+        QueueKafka* queue_kafka_;
 };
 
 #endif

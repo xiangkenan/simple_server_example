@@ -14,7 +14,9 @@ kafka_consumer_client::kafka_consumer_client(){}
 
 kafka_consumer_client::~kafka_consumer_client(){}
 
-bool kafka_consumer_client::initClient(){
+bool kafka_consumer_client::initClient(QueueKafka* queue_kafka){
+
+    queue_kafka_ = queue_kafka;
 
     RdKafka::Conf *conf = nullptr;
     conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -100,10 +102,13 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
             gettimeofday(&start_time, NULL);
             //处理kafka用户信息
             //user_query->Run(behaver_message, log_str);
+            queue_kafka_->put_queue(behaver_message);
+            //cout << behaver_message << endl;
+            //cout << write_ms_log(start_time, "cost:") << endl;
             //kafka_consumer_->start(topic_, partition_, offset_);
-            if (!log_str.empty()) {
-                LOG(INFO) << log_str << write_ms_log(start_time, "cost:");
-            }
+            //if (!log_str.empty()) {
+            //    LOG(INFO) << log_str << write_ms_log(start_time, "cost:");
+            //}
             last_offset_ = message->offset();
             break;
         case RdKafka::ERR__PARTITION_EOF:
@@ -130,8 +135,6 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
             sleep(1);
         }
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);
-
-        //写入队列线程安全
 
         consumer(msg, nullptr, user_query);
         kafka_consumer_->poll(0);

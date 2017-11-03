@@ -453,8 +453,8 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
 
         string json_1006 = kafka_data->offline_data_json["rv"]["1006"].asString();
 
-        if (json_1006 != "") {
-            json_1006  =  distance_time_now(json_1006)/86400;
+        if (kafka_data->offline_data_json["rv"]["1006"] != "") {
+            kafka_data->offline_data_json["rv"]["1006"]  =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
         }
 
         if (kafka_data->offline_data_json["rv"]["7"] != "") {
