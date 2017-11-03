@@ -17,8 +17,18 @@ class OfoCrm {
         OfoCrm() {};
         ~OfoCrm() {};
 
-        bool Run();
+        bool Run(int num);
         UserQuery user_query;
+};
+
+class RunKafka {
+    public:
+        RunKafka(OfoCrm* ofo_crm, int num) {
+            ofo_crm_ = ofo_crm;
+            num_ = num;
+        }
+        OfoCrm *ofo_crm_;
+        int num_;
 };
 
 #endif

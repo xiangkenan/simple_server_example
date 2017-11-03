@@ -96,13 +96,13 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
             //len = static_cast<int>(message->len());
             //kafka_consumer_->stop(topic_, partition_);  
             behaver_message = static_cast<const char*>(message->payload());
-            struct timeval start_time, end_time;
+            struct timeval start_time;
             gettimeofday(&start_time, NULL);
-            user_query->Run(behaver_message, log_str);
-            gettimeofday(&end_time, NULL);
+            //处理kafka用户信息
+            //user_query->Run(behaver_message, log_str);
             //kafka_consumer_->start(topic_, partition_, offset_);
-            if (!log_str.empty() && log_str.find("ms") != string::npos) {
-                LOG(INFO) << log_str << "******:cost-time:" << get_ms(&start_time, &end_time)/1000 << "ms";
+            if (!log_str.empty()) {
+                LOG(INFO) << log_str << write_ms_log(start_time, "cost:");
             }
             last_offset_ = message->offset();
             break;
@@ -133,8 +133,7 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
 
         //写入队列线程安全
 
-        //
- //       consumer(msg, nullptr, user_query);
+        consumer(msg, nullptr, user_query);
         kafka_consumer_->poll(0);
         delete msg;
     }

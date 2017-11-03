@@ -1,19 +1,15 @@
 #include "kafka_consume.h"
 #include "ofo_crm.h"
 
-#define THREAD_COUNT 19
-
-class ST_run_kafka {
-    OfoCrm ofo_crm;
-    int num;
-};
+#define THREAD_COUNT 20
 
 static void sigterm (int sig) {
     kafka_consumer_client::run_ = false;
 }
 
-void *run_kafka(void *ofo_crm) {
-    (*(OfoCrm *)ofo_crm).Run();
+void *run_kafka(void *run_kafka_fun) {
+    RunKafka* run_kafka = (RunKafka*)run_kafka_fun;
+    (run_kafka->ofo_crm_)->Run(run_kafka->num_);
 
     return NULL;
 }
@@ -37,7 +33,8 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 0; i < THREAD_COUNT; ++i) {
-        pthread_create(&id[i], NULL, run_kafka, (void *)&ofo_crm);
+        RunKafka run_kafka_fun(&ofo_crm, i);
+        pthread_create(&id[i], NULL, run_kafka, (void *)&run_kafka_fun);
     }
 
     void *thread_result;
