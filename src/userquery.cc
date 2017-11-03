@@ -34,7 +34,7 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config,
 
 }
 
-bool UserQuery::Run(string& behaver_message, string& log_str) {
+bool UserQuery::Run(const string& behaver_message, string& log_str) {
     KafkaData kafka_data;
 
     Redis redis_userid;
@@ -407,7 +407,6 @@ bool UserQuery::LoadInitialRangeData() {
 
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
-
     Json::Reader reader;
     Json::Value user_json;
 

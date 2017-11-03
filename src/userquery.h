@@ -22,7 +22,7 @@ class UserQuery {
         UserQuery();
         ~UserQuery() {};
         bool Init();
-        bool Run(std::string& behaver_message, std::string& log_str);
+        bool Run(const std::string& behaver_message, std::string& log_str);
         bool run_;
     private:
         bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1);
