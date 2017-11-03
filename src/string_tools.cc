@@ -81,22 +81,29 @@ string date_format_ymd(string date) {
     struct tm p,tmp_time;
     time_t cost;
     strptime(date.c_str(),"%Y-%m-%d %H:%M:%S", &tmp_time);
-    cost = mktime(&tmp_time);
+    cost = mktime_get(&tmp_time);
     FastSecondToDate(cost, &p, 8);
     string date_now = get_year_mon_day_format(to_string(p.tm_year+1900) , to_string(p.tm_mon+1), to_string(p.tm_mday));
     return date_now;
 }
 
 int distance_time_now(string time_msg) {
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
     if (time_msg == "")
         return 0;
     struct tm tmp_time;
     strptime(time_msg.c_str(),"%Y-%m-%d %H:%M:%S",&tmp_time);
     time_t user_time, cur_time;
-    user_time = mktime(&tmp_time);
+    //user_time = mktime(&tmp_time);
+    user_time = mktime_get(&tmp_time);
     time(&cur_time);
     int cost = difftime(cur_time, user_time);
     return cost;
+}
+
+time_t mktime_get(struct tm *time_now) {
+    return mktime_m(time_now->tm_year+1900, time_now->tm_mon+1, time_now->tm_mday, time_now->tm_hour, time_now->tm_min, time_now->tm_sec) - 28800;
 }
 
 void Split(const string& s, const string& delim, vector<string>* ret) {
@@ -294,3 +301,27 @@ string& replace_all_distinct(string& str,const string& old_value,const string& n
 long get_ms(const struct timeval* ts, const struct timeval* te) {
     return (te->tv_sec - ts->tv_sec) * 1000000 + (te->tv_usec - ts->tv_usec);
 }
+
+string write_ms_log (struct timeval start_time, const string& log_flag) {
+    struct timeval end_time;
+    gettimeofday(&end_time, NULL);
+    return "<" + log_flag + to_string(get_ms(&start_time, &end_time)/1000) + " ms>";
+}
+
+inline unsigned long mktime_m (unsigned int year, unsigned int mon,
+        unsigned int day, unsigned int hour,
+        unsigned int min, unsigned int sec)
+{
+    if (0 >= (int) (mon -= 2)) {    /* 1..12 -> 11,12,1..10 */
+        mon += 12;      /* Puts Feb last since it has leap day */
+        year -= 1;
+    }
+
+    return (((
+                    (unsigned long) (year/4 - year/100 + year/400 + 367*mon/12 + day) +
+                    year*365 - 719499
+             )*24 + hour /* now have hours */
+            )*60 + min /* now have minutes */
+           )*60 + sec; /* finally seconds */
+}
+

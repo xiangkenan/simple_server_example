@@ -3,6 +3,11 @@
 
 #define THREAD_COUNT 19
 
+class ST_run_kafka {
+    OfoCrm ofo_crm;
+    int num;
+};
+
 static void sigterm (int sig) {
     kafka_consumer_client::run_ = false;
 }
@@ -14,7 +19,7 @@ void *run_kafka(void *ofo_crm) {
 }
 
 int main(int argc, char **argv) {
-    FLAGS_logbufsecs = 2000;
+    FLAGS_logbufsecs = 0;
     FLAGS_max_log_size = 2000;
     FLAGS_log_dir = "./log";
     google::InitGoogleLogging("user_behaviour");

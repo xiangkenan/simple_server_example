@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <time.h>
+#include <sys/time.h>
 #include <vector>
 #include <jsoncpp/jsoncpp.h>
 #include <glog/logging.h>
@@ -31,5 +33,9 @@ void merge_vec(std::vector<TimeRange>* time_range_vec_last, std::vector<TimeRang
 std::string get_year_mon_day_format(std::string year, std::string month, std::string day);
 std::string& replace_all_distinct(std::string& str,const std::string& old_value,const std::string& new_value);
 long get_ms(const struct timeval* ts, const struct timeval* te);
+std::string write_ms_log (struct timeval start_time, const std::string& log_flag);
+inline unsigned long mktime_m (unsigned int year, unsigned int mon,unsigned int day, unsigned int hour,unsigned int min, unsigned int sec);
+time_t mktime_get(struct tm *time_now);
+
 
 #endif

@@ -34,29 +34,40 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config,
 
 }
 
-bool UserQuery::Run(string behaver_message, string& log_str) {
+bool UserQuery::Run(string& behaver_message, string& log_str) {
     KafkaData kafka_data;
 
-    Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
+    Redis redis_userid;
+    Redis redis_user_trigger_config;
+    Redis redis_user_trigger_config1;
+
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
 
     if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
         return false;
     }
 
+    kafka_data.log_str = write_ms_log(start_time, "init-redis:");
     if(!Parse_kafka_data(&redis_userid, &redis_user_trigger_config, behaver_message, &kafka_data)) {
         log_str = kafka_data.log_str;
         return false;
     }
 
+    kafka_data.log_str += write_ms_log(start_time, "init-Parse_kafka_data:");
+
     if (!HandleProcess(&redis_userid, &redis_user_trigger_config, &kafka_data)) {
+        kafka_data.log_str += write_ms_log(start_time, "HandleProcess:");
         log_str = kafka_data.log_str;
         return false;
     }
+    kafka_data.log_str += write_ms_log(start_time, "HandleProcess:");
 
     //发短信
     SendMessage(&kafka_data);
-    log_str = kafka_data.log_str;
+    kafka_data.log_str += write_ms_log(start_time, "send-message:");
 
+    log_str = kafka_data.log_str;
     return true;
 }
 
@@ -110,9 +121,11 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str = kafka_data->uid;
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
+    kafka_data->log_str += kafka_data->uid;
     //初始化配置操作类
-    NoahConfigRead noah_config_read(time_range_origin);
+    NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
@@ -148,8 +161,10 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
 
             if (!noah_config_read.Run(iter->second.base_config[i], kafka_data)) {
                 flag_hit = -1;
+                kafka_data->log_str += write_ms_log(start_time, "具体的维度耗时:");
                 break;
             }
+            kafka_data->log_str += write_ms_log(start_time, "具体的维度耗时:");
         }
 
         if (flag_hit == -1)
@@ -405,6 +420,8 @@ bool UserQuery::LoadInitialRangeData() {
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
 
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
     Json::Reader reader;
     Json::Value user_json;
 
@@ -440,6 +457,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         }
 
         //测试
+        cout << kafka_data->uid << endl;
         kafka_data->uid = "554345677";
 
         //获取用户离线数据
@@ -447,8 +465,10 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         redis_user_trigger_config->Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
-        if (kafka_data->offline_data_json["rv"]["1006"] != "") {
-            kafka_data->offline_data_json["rv"]["1006"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
+        string json_1006 = kafka_data->offline_data_json["rv"]["1006"].asString();
+
+        if (json_1006 != "") {
+            json_1006  =  distance_time_now(json_1006)/86400;
         }
 
         if (kafka_data->offline_data_json["rv"]["7"] != "") {
@@ -475,6 +495,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         if (kafka_data->offline_data_json["rv"]["12"] != "") {
             kafka_data->offline_data_json["rv"]["12"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400 + 1;
         }
+        kafka_data->log_str += write_ms_log(start_time, "卡夫卡5:");
 
         return true;
     }
