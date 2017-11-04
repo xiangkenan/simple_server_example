@@ -16,6 +16,7 @@
 #include "string_tools.h"
 #include "noah_config.h"
 #include "config_struct.h"
+#include "city.h"
 
 class UserQuery {
     public:
@@ -31,7 +32,7 @@ class UserQuery {
         void parse_noah_config(const std::unordered_map<std::string, std::string>& all_json);
         bool LoadInitialRangeData();
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);
-        bool SendMessage(KafkaData* kafka_data);
+        bool SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config);
         void Detect();
         bool UpdateDayIncrement();
         bool DumpDayFile();
@@ -58,6 +59,7 @@ class UserQuery {
 
         std::string last_update_increment_date;
         std::string dump_file_every_date;
+        City city;
 };
 
 #endif

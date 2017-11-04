@@ -12,6 +12,7 @@ UserQuery::UserQuery() {
     time_range_file.insert(make_pair("order.weekday_order", "weekday_order"));
     time_range_file.insert(make_pair("order.peak_order", "peak_order"));
     time_range_file.insert(make_pair("offline.bikeFailed", "bike_failed"));
+
 }
 
 bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1) {
@@ -57,18 +58,23 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     }
 
     //发短信
-    SendMessage(&kafka_data);
+    SendMessage(&kafka_data, &redis_user_trigger_config);
 
     log_str = kafka_data.log_str;
     return true;
 }
 
-bool UserQuery::SendMessage(KafkaData* kafka_data) {
+bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config) {
     int ret;
     char buf[1024];
 
     for (size_t i = 0; i < kafka_data->action_id.size(); ++i) {
-        int limit  = atoi(lasso_config_map[kafka_data->action_id[i]].limit.c_str());
+        int limit;
+        if (lasso_config_map[kafka_data->action_id[i]].limit == "") {
+            limit = 0;
+        } else {
+            limit = atoi(lasso_config_map[kafka_data->action_id[i]].limit.c_str());
+        }
 
         string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=activity," + kafka_data->action_id[i];
         if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
@@ -78,7 +84,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
 
         Json::Value result;
         result = get_url_json(buf);
-        if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str())) {
+        if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str()) && limit != 0) {
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
             return false;
         } else {
@@ -96,12 +102,28 @@ bool UserQuery::SendMessage(KafkaData* kafka_data) {
             replace_all_distinct(tel_push_msg[j].content, "{register.city}", kafka_data->userprofile_city);
             replace_all_distinct(tel_push_msg[j].content,"{register.days}", kafka_data->register_day);
             replace_all_distinct(tel_push_msg[j].content,"{accumulate.orders}", kafka_data->order_num);
+            replace_all_distinct(tel_push_msg[j].content,"{latest.order.city}", "");
 
-            if (tel_push_msg[i].type == "message") {
+            cout << tel_push_msg[j].type << endl;
+            if (tel_push_msg[j].type == "message") {
+                string url = "192.168.2.123/now";
+                string args = "to=18211097924&templateId=crm_notify&context="+tel_push_msg[j].content;
+                //string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
+                string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
+                memset(buf, 0, sizeof(buf));
+                if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
+                    kafka_data->log_str += "(send message error!!)";
+                }
                 kafka_data->log_str += "=>(send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + ")";
             }
-            if (tel_push_msg[i].type == "push") {
+            if (tel_push_msg[j].type == "push") {
+                int id = (atoi(kafka_data->uid.c_str())+1)%5;
+                cout << id << endl;
+                //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
+                //redis_user_trigger_config->HSet("hash:push#"+id, "content" + tel_push_msg[j].content);
+                //redis_user_trigger_config->HSet("hash:push#"+id, "jump_url" + tel_push_msg[j].jump_url);
+
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
             }
@@ -216,6 +238,7 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
 
     noah_config->activity = all_config["activityId"].asString();
     noah_config->limit = all_config["limit"].asString();
+    cout << all_config << endl;
 
     return true;
 }
@@ -339,7 +362,7 @@ bool UserQuery::DumpDayFile() {
     }
 
     dump_file_every_date = date;
-    LOG(WARNING) << "start dump file :" << date ;
+    LOG(WARNING) << "start dump file :" << date;
 
     string dump_path = "mkdir -p ./data/dump/" + date;
     system(dump_path.c_str());
@@ -442,7 +465,6 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         }
 
         //测试
-        //cout << kafka_data->uid << endl;
         kafka_data->uid = "554345677";
 
         //获取用户离线数据
@@ -461,7 +483,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         }
 
         if (kafka_data->offline_data_json["rv"]["11"] != "") {
-            kafka_data->userprofile_city = kafka_data->offline_data_json["rv"]["11"].asString();
+            kafka_data->userprofile_city = city.city_map[kafka_data->offline_data_json["rv"]["11"].asString()];
         }
 
         if (kafka_data->offline_data_json["rv"]["8"] != "") {

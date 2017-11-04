@@ -2,17 +2,11 @@
 
 using namespace std;
 
-string QueueKafka::get_queue() {
-    string msg_str = "";
-    if (mq_.empty()) {
-        usleep(1000);
-        return msg_str;
-    }
+void QueueKafka::get_queue(string& get_msg) {
     pthread_mutex_lock(&mutex);
-    msg_str = mq_.front();
+    get_msg = mq_.front();
     mq_.pop();
     pthread_mutex_unlock(&mutex);  
-    return msg_str;
 }
 
 void QueueKafka::put_queue(const string& str_msg) {

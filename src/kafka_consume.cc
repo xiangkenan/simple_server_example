@@ -132,6 +132,11 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
 
     while(run_){
         while (!user_query->run_){
+            ofstream ofile;
+            ofile.open("./data/offset/offset.txt");
+            ofile << last_offset_;
+            ofile.close();
+
             sleep(1);
         }
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);

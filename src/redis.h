@@ -82,7 +82,6 @@ class Redis {
         return true;
     }
                 
-
     bool Get(const std::string& key, std::string* value) {
         value->clear();
         reply_ = (redisReply*) redisCommand(connect_, "GET %s", key.c_str());
@@ -113,6 +112,33 @@ class Redis {
 
         if (error) {
             LOG(ERROR) << "Failed to hget value from key: " << id << ":" << key;
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Lpush(const std::string& key, const std::string& value) {
+        reply_ = (redisReply*) redisCommand(connect_, "lpush %s %s", key.c_str(), value.c_str());
+
+        bool error = (reply_->type == REDIS_REPLY_ERROR);
+        freeReplyObject(reply_);
+        if (error) {
+            LOG(ERROR) << "Failed to lpush " << key << " " << value;
+            std::cout << "lpush failed" << std::endl;
+            return false;
+        }
+        std::cout << "lpush seccess" << std::endl;
+        return true;
+    }
+
+    bool HSet(const std::string &id, const std::string& key, const std::string& value) {
+        reply_ = (redisReply*) redisCommand(connect_, "HSET %s %s %s", id.c_str(), key.c_str(), value.c_str());
+
+        bool error = (reply_->type == REDIS_REPLY_ERROR);
+        freeReplyObject(reply_);
+        if (error) {
+            LOG(ERROR) << "Failed to hset " << key << " " << value;
             return false;
         }
 
