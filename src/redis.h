@@ -128,13 +128,12 @@ class Redis {
             std::cout << "lpush failed" << std::endl;
             return false;
         }
-        std::cout << "lpush seccess" << std::endl;
         return true;
     }
 
     bool HSet(const std::string &id, const std::string& key, const std::string& value) {
         reply_ = (redisReply*) redisCommand(connect_, "HSET %s %s %s", id.c_str(), key.c_str(), value.c_str());
-        std::cout << "Hset: " << id << "\t"<< key.c_str() << "\t"<< value.c_str()<< "\t" << std::endl;
+        //std::cout << "Hset: " << id << "\t"<< key.c_str() << "\t"<< value.c_str()<< "\t" << std::endl;
 
         bool error = (reply_->type == REDIS_REPLY_ERROR);
         freeReplyObject(reply_);
@@ -157,6 +156,18 @@ class Redis {
         freeReplyObject(reply_);
         if (error) {
             LOG(ERROR) << "Failed to set " << key << " " << value << " expire time: " << expire_time;
+            return false;
+        }
+
+        return true;
+    }
+
+    bool HIncrby(const std::string id, const std::string key, int num) {
+        reply_ = (redisReply*) redisCommand(connect_, "HINCRBY %s %s %d", id.c_str(), key.c_str(), num);
+        bool error = (reply_->type == REDIS_REPLY_ERROR);
+        freeReplyObject(reply_);
+        if (error) {
+            LOG(ERROR) << "Failed to hincrby " << key;
             return false;
         }
 

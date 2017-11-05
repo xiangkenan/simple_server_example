@@ -57,13 +57,13 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     }
 
     //发短信
-    SendMessage(&kafka_data, &redis_user_trigger_config);
+    SendMessage(&kafka_data, &redis_user_trigger_config, redis_user_trigger_config1);
 
     log_str = kafka_data.log_str;
     return true;
 }
 
-bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config) {
+bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1) {
     int ret;
     char buf[1024];
 
@@ -94,11 +94,13 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_con
             }
         }
 
-        //redis_user_trigger_config->Hset("crm_activity_num", kafka_data->action_id, );
+        //活动计数
+        redis_user_trigger_config1->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
 
         //开发短信和push
         vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
         for (size_t j = 0; j < tel_push_msg.size(); ++j) {
+            memset(buf, 0, sizeof(buf));
             //个性化信息转换
             replace_all_distinct(tel_push_msg[j].content, "{register.city}", kafka_data->userprofile_city);
             replace_all_distinct(tel_push_msg[j].content,"{register.days}", kafka_data->register_day);
@@ -107,10 +109,8 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_con
 
             if (tel_push_msg[j].type == "message") {
                 string url = "192.168.2.123/now";
-                string args = "to=18211097924&templateId=crm_notify&context="+tel_push_msg[j].content;
                 //string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
-                memset(buf, 0, sizeof(buf));
                 //*************
                 //if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
                 //    kafka_data->log_str += "(send message error!!)";
@@ -124,10 +124,10 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_con
                 //cout << id << endl;
                 //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
                 //*************
-                //string id = "1";
-                //redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
-                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
-                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
+                string id = "1";
+                redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
+                redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
+                redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
                 //*************
 
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 

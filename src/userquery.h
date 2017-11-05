@@ -32,7 +32,7 @@ class UserQuery {
         void parse_noah_config(const std::unordered_map<std::string, std::string>& all_json);
         bool LoadInitialRangeData();
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);
-        bool SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config);
+        bool SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config, Redis* redis_user_trigger_config1);
         void Detect();
         bool UpdateDayIncrement();
         bool DumpDayFile();
