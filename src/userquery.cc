@@ -57,7 +57,7 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     }
 
     //发短信
-    SendMessage(&kafka_data, &redis_user_trigger_config, redis_user_trigger_config1);
+    SendMessage(&kafka_data, &redis_user_trigger_config, &redis_user_trigger_config1);
 
     log_str = kafka_data.log_str;
     return true;
@@ -124,10 +124,10 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 //cout << id << endl;
                 //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
                 //*************
-                string id = "1";
-                redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
-                redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
-                redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
+                //string id = "1";
+                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
+                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
+                //redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
                 //*************
 
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
@@ -264,6 +264,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
 
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
+
 
         //初始化圈选数据
         for (unsigned int i = 0; i < lasso_config.size(); ++i) {
@@ -484,6 +485,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
 
         if (kafka_data->offline_data_json["rv"]["7"] != "") {
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
+            kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
         }
 
         if (kafka_data->offline_data_json["rv"]["11"] != "") {
@@ -496,7 +498,6 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
 
         if (kafka_data->offline_data_json["rv"]["1008"] != "") {
             kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
-            kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["1008"].asString().c_str())/86400);
         }
 
         if (kafka_data->offline_data_json["rv"]["1001"] != "") {

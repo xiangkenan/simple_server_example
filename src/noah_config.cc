@@ -174,7 +174,7 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
         }
     } else {
         //测试
-        return 2;
+        return -1;
     }
 
     int num = 0;
@@ -188,11 +188,15 @@ int NoahConfigRead::is_time_range_value(const BaseConfig& config, KafkaData* kaf
     return num;
 }
 
-bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data) {
+bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data, int num = 0) {
     string msg = redis_field_map[config.filter_id];
     if (msg == "") {
         msg = config.filter_id;
     }
+    if (num != 0) {
+        msg += ":("+ to_string(num) +")";
+    }
+
     if (flag == true) {
         kafka_data->log_str += "&" + msg;
     }
@@ -232,6 +236,7 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
        user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
 
     bool ret;
+    int num = 0;
     switch (flag) {
         case 1:
             ret = is_include(config, user_msg);
@@ -243,11 +248,13 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             ret = is_time_range(config, user_msg);
             return write_log(config, ret, kafka_data);
         case 4:
-            ret = is_big_small(config, is_time_range_value(config, kafka_data));
-            return write_log(config, ret, kafka_data);
+            num =  is_time_range_value(config, kafka_data);
+            ret = is_big_small(config, num);
+            return write_log(config, ret, kafka_data, num);
         case 5:
-            ret = is_include(config, to_string(is_time_range_value(config, kafka_data)));
-            return write_log(config, ret, kafka_data);
+            num = is_time_range_value(config, kafka_data);
+            ret = is_include(config, to_string(num));
+            return write_log(config, ret, kafka_data, num);
         default:
             kafka_data->log_str += "&未知字段:" + config.filter_id;
             return true;

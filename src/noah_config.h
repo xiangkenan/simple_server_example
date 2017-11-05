@@ -18,7 +18,7 @@ class NoahConfigRead {
         bool Run(const BaseConfig& config, KafkaData* kafka_data);
     private:
         bool data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data);
-        bool write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data);
+        bool write_log(const BaseConfig& config, bool flag, KafkaData* kafka_data, int num);
 
         bool is_include(const BaseConfig& config, std::string user_msg); //包含,不包含类型
         bool is_confirm(const BaseConfig& config, std::string user_msg); //是,否类型
