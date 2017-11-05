@@ -24,7 +24,7 @@ class kafka_consumer_client{
         virtual ~kafka_consumer_client();
 
         bool initClient(QueueKafka* queue_kafka);
-        bool consume(int timeout_ms, UserQuery *user_query);
+        bool consume(int timeout_ms, UserQuery *user_query, int i);
         void finalize();
         static bool run_;
     private:

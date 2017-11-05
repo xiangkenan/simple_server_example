@@ -18,20 +18,22 @@ class OfoCrm {
         OfoCrm() {};
         ~OfoCrm() {};
 
-        bool Run(int num, QueueKafka* queue_kafka);
+        bool Run(int num, QueueKafka* queue_kafka, long offset);
         UserQuery user_query;
 };
 
 class RunKafka {
     public:
-        RunKafka(OfoCrm* ofo_crm, int num, QueueKafka* queue_kafka) {
+        RunKafka(OfoCrm* ofo_crm, int num, QueueKafka* queue_kafka, long offset) {
             ofo_crm_ = ofo_crm;
             num_ = num;
             queue_kafka_ = queue_kafka;
+            offset_ = offset;
         }
         OfoCrm *ofo_crm_;
         int num_;
         QueueKafka* queue_kafka_;
+        long offset_;
 };
 
 class RunQueue {

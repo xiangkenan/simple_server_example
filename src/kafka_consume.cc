@@ -127,13 +127,13 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
     }
 }
 
-bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query) {
+bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query, int i) {
     RdKafka::Message *msg = nullptr;
 
     while(run_){
         while (!user_query->run_){
             ofstream ofile;
-            ofile.open("./data/offset/offset.txt");
+            ofile.open("./conf/offset/offset_" + to_string(i) + ".txt");
             ofile << last_offset_;
             ofile.close();
 

@@ -134,11 +134,12 @@ class Redis {
 
     bool HSet(const std::string &id, const std::string& key, const std::string& value) {
         reply_ = (redisReply*) redisCommand(connect_, "HSET %s %s %s", id.c_str(), key.c_str(), value.c_str());
+        std::cout << "Hset: " << id << "\t"<< key.c_str() << "\t"<< value.c_str()<< "\t" << std::endl;
 
         bool error = (reply_->type == REDIS_REPLY_ERROR);
         freeReplyObject(reply_);
         if (error) {
-            LOG(ERROR) << "Failed to hset " << key << " " << value;
+            LOG(ERROR) << "Failed to hset " << id << " " << key << " " << value;
             return false;
         }
 

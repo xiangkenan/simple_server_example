@@ -32,7 +32,6 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config,
     }
 
     return true;
-
 }
 
 bool UserQuery::Run(const string& behaver_message, string& log_str) {
@@ -95,6 +94,8 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_con
             }
         }
 
+        //redis_user_trigger_config->Hset("crm_activity_num", kafka_data->action_id, );
+
         //开发短信和push
         vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
         for (size_t j = 0; j < tel_push_msg.size(); ++j) {
@@ -104,25 +105,30 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_con
             replace_all_distinct(tel_push_msg[j].content,"{accumulate.orders}", kafka_data->order_num);
             replace_all_distinct(tel_push_msg[j].content,"{latest.order.city}", "");
 
-            cout << tel_push_msg[j].type << endl;
             if (tel_push_msg[j].type == "message") {
                 string url = "192.168.2.123/now";
                 string args = "to=18211097924&templateId=crm_notify&context="+tel_push_msg[j].content;
                 //string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 memset(buf, 0, sizeof(buf));
-                if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
-                    kafka_data->log_str += "(send message error!!)";
-                }
+                //*************
+                //if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
+                //    kafka_data->log_str += "(send message error!!)";
+                //}
+                //*************
                 kafka_data->log_str += "=>(send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + ")";
             }
             if (tel_push_msg[j].type == "push") {
-                int id = (atoi(kafka_data->uid.c_str())+1)%5;
-                cout << id << endl;
+                //int id = (atoi(kafka_data->uid.c_str())+1)%5;
+                //cout << id << endl;
                 //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
-                //redis_user_trigger_config->HSet("hash:push#"+id, "content" + tel_push_msg[j].content);
-                //redis_user_trigger_config->HSet("hash:push#"+id, "jump_url" + tel_push_msg[j].jump_url);
+                //*************
+                //string id = "1";
+                //redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
+                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
+                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
+                //*************
 
                 kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
@@ -238,7 +244,6 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
 
     noah_config->activity = all_config["activityId"].asString();
     noah_config->limit = all_config["limit"].asString();
-    cout << all_config << endl;
 
     return true;
 }
@@ -259,8 +264,6 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
 
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
-
-        //cout << all_config << endl;
 
         //初始化圈选数据
         for (unsigned int i = 0; i < lasso_config.size(); ++i) {
