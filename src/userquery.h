@@ -26,13 +26,13 @@ class UserQuery {
         bool Run(const std::string& behaver_message, std::string& log_str);
         bool run_;
     private:
-        bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1);
+        bool InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData* kafka_data);
         bool Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, std::string behaver_message, KafkaData* kafka_data);
         void parse_noah_config(const std::unordered_map<std::string, std::string>& all_json);
         bool LoadInitialRangeData();
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);
-        bool SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config, Redis* redis_user_trigger_config1);
+        bool SendMessage(KafkaData* kafka_data, Redis *redis_user_trigger_config);
         void Detect();
         bool UpdateDayIncrement();
         bool DumpDayFile();

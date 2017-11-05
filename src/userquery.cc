@@ -15,7 +15,7 @@ UserQuery::UserQuery() {
 
 }
 
-bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1) {
+bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
     if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
         LOG(WARNING) << "connect userid redis failed" ;
         return false;
@@ -26,10 +26,10 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config,
         return false;
     }
 
-    if (!redis_user_trigger_config1->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
-        LOG(WARNING) << "connect user_trigger_config redis failed" ;
-        return false;
-    }
+    //if (!redis_user_trigger_config1->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
+    //    LOG(WARNING) << "connect user_trigger_config redis failed" ;
+    //    return false;
+    //}
 
     return true;
 }
@@ -39,9 +39,8 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
 
     Redis redis_userid;
     Redis redis_user_trigger_config;
-    Redis redis_user_trigger_config1;
 
-    if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
+    if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
         return false;
     }
 
@@ -57,13 +56,13 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     }
 
     //发短信
-    SendMessage(&kafka_data, &redis_user_trigger_config, &redis_user_trigger_config1);
+    SendMessage(&kafka_data, &redis_user_trigger_config);
 
     log_str = kafka_data.log_str;
     return true;
 }
 
-bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_config, Redis* redis_user_trigger_config1) {
+bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_config) {
     int ret;
     char buf[1024];
 
@@ -95,7 +94,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
         }
 
         //活动计数
-        redis_user_trigger_config1->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
+        redis_user_trigger_config->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
 
         //开发短信和push
         vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
@@ -261,6 +260,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
         if (!pretreatment(all_config, &noah_config)) {
             continue;
         }
+        cout << all_config << endl;
 
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
@@ -324,16 +324,16 @@ void UserQuery::Detect() {
     while(true) {
         run_ = false;
         sleep(2);
-        Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
+        Redis redis_userid, redis_user_trigger_config;
         LOG(WARNING) << "start update config every min";
         //初始化redis
-        if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
+        if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
             LOG(ERROR) << "redis init error";
             continue;
         }
 
         //更新noah配置
-        if(!FreshTriggerConfig(&redis_user_trigger_config1)) {
+        if(!FreshTriggerConfig(&redis_user_trigger_config)) {
             LOG(ERROR) << "init conf error";
             continue;
         }
