@@ -6,6 +6,7 @@ void QueueKafka::get_queue(string& get_msg) {
     pthread_mutex_lock(&mutex);
     if(mq_.empty()) {
         get_msg = "empty";
+        pthread_mutex_unlock(&mutex);
         return;
     }
     get_msg = mq_.front();
