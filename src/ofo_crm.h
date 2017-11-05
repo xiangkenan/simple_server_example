@@ -19,6 +19,7 @@ class OfoCrm {
         ~OfoCrm() {};
 
         bool Run(int num, QueueKafka* queue_kafka, long offset);
+        bool run_operate(QueueKafka* queue_kafka);
         UserQuery user_query;
 };
 

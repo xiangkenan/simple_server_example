@@ -22,3 +22,28 @@ bool OfoCrm::Run(int i, QueueKafka* queue_kafka, long offset) {
 
     return NULL;
 }
+
+bool OfoCrm::run_operate(QueueKafka* queue_kafka) {
+    //消费queue
+    while(kafka_consumer_client::run_) {
+        while(!(user_query.run_) || queue_kafka->empty()) {
+            if (kafka_consumer_client::run_ == false) {
+                return NULL;
+            }
+            usleep(1000);
+        }
+        string log_str;
+        struct timeval start_time;
+        gettimeofday(&start_time, NULL);
+        string get_msg;
+        queue_kafka->get_queue(get_msg);
+        if (get_msg == "empty")
+            continue;
+        //处理kafka用户信息
+        user_query.Run(get_msg, log_str);
+        if (!log_str.empty()) {
+            LOG(INFO) << log_str << write_ms_log(start_time, "cost:");
+        }
+    }
+    return NULL;
+}

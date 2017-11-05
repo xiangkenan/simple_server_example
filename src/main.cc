@@ -2,8 +2,8 @@
 #include "ofo_crm.h"
 #include "queue.h"
 
-#define THREAD_COUNT 1
-#define RATIO 1
+#define THREAD_COUNT 20
+#define RATIO 5
 #define THREAD_QUEUE THREAD_COUNT*RATIO
 
 static void sigterm (int sig) {
@@ -20,24 +20,7 @@ void *run_kafka(void *run_kafka_fun) {
 //消费queue
 void *run_queue(void *run_queue_fun) {
     RunQueue* run_queue = (RunQueue*)run_queue_fun;
-    while(kafka_consumer_client::run_) {
-        while(!(((run_queue->ofo_crm_)->user_query).run_) || run_queue->queue_kafka_->empty()) {
-            if (kafka_consumer_client::run_ == false) {
-                return NULL;
-            }
-            usleep(1000);
-        }
-        string log_str;
-        struct timeval start_time;
-        gettimeofday(&start_time, NULL);
-        string get_msg;
-        run_queue->queue_kafka_->get_queue(get_msg);
-        //处理kafka用户信息
-        ((run_queue->ofo_crm_)->user_query).Run(get_msg, log_str);
-        if (!log_str.empty()) {
-            LOG(INFO) << log_str << write_ms_log(start_time, "cost:");
-        }
-    }
+    (run_queue->ofo_crm_)->run_operate(run_queue->queue_kafka_);
 
     return NULL;
 }
@@ -99,6 +82,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < THREAD_COUNT; ++i) {
         usleep(100);
         RunKafka run_kafka_fun(&ofo_crm, i, queue_kafka_vec[i], offset[i]);
+ //       cout << "push:" << queue_kafka_vec[i] << endl;
         pthread_create(&id[i], NULL, run_kafka, (void *)&run_kafka_fun);
     }
 
@@ -109,13 +93,14 @@ int main(int argc, char **argv) {
         pthread_create(&id_queue[i], NULL, run_queue, (void *)&run_queue_fun);
     }
 
+    void *thread_result1;
+    for (int i = 0; i < THREAD_QUEUE; ++i) {
+        pthread_join(id_queue[i], &thread_result1);
+    }
+
     void *thread_result;
     for (int i = 0; i < THREAD_COUNT; ++i) {
         pthread_join(id[i], &thread_result);
-    }
-
-    for (int i = 0; i < THREAD_QUEUE; ++i) {
-        pthread_join(id_queue[i], &thread_result);
     }
 
     return 0;

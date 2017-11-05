@@ -6,6 +6,7 @@
 #./run
 
 proc="./crm_noah"
+ulimit -c unlimited
 
 if [[ $1 == "stop" ]]; then
     ps -aux | grep "$proc" | grep -v grep | awk '{print $2}' | xargs kill -9

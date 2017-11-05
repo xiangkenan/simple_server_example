@@ -4,6 +4,10 @@ using namespace std;
 
 void QueueKafka::get_queue(string& get_msg) {
     pthread_mutex_lock(&mutex);
+    if(mq_.empty()) {
+        get_msg = "empty";
+        return;
+    }
     get_msg = mq_.front();
     mq_.pop();
     pthread_mutex_unlock(&mutex);
