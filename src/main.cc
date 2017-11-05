@@ -2,7 +2,7 @@
 #include "ofo_crm.h"
 #include "queue.h"
 
-#define THREAD_COUNT 20
+#define THREAD_COUNT 2
 #define RATIO 5
 #define THREAD_QUEUE THREAD_COUNT*RATIO
 

@@ -52,7 +52,12 @@ string get_now_hour_min_sec() {
     struct tm p;
     time(&timep);
     FastSecondToDate(timep, &p, 8);
-    string date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":" + to_string(p.tm_sec);
+    string date_now;
+    if (p.tm_sec < 10)
+       date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":0" + to_string(p.tm_sec);
+    else
+       date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":" + to_string(p.tm_sec);
+
     return date_now;
 }
 
