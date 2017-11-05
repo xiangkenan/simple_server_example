@@ -2,8 +2,9 @@
 #include "ofo_crm.h"
 #include "queue.h"
 
-#define THREAD_COUNT 20
-#define THREAD_QUEUE THREAD_COUNT*10
+#define THREAD_COUNT 1
+#define RATIO 1
+#define THREAD_QUEUE THREAD_COUNT*RATIO
 
 static void sigterm (int sig) {
     kafka_consumer_client::run_ = false;

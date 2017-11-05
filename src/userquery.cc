@@ -324,6 +324,7 @@ void UserQuery::Detect() {
         run_ = false;
         sleep(2);
         Redis redis_userid, redis_user_trigger_config, redis_user_trigger_config1;
+        LOG(WARNING) << "start update config every min";
         //初始化redis
         if(!InitRedis(&redis_userid, &redis_user_trigger_config, &redis_user_trigger_config1)) {
             LOG(ERROR) << "redis init error";
