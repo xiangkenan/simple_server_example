@@ -26,7 +26,7 @@ bool OfoCrm::Run(int i, QueueKafka* queue_kafka, long offset) {
 bool OfoCrm::run_operate(QueueKafka* queue_kafka) {
     //消费queue
     while(kafka_consumer_client::run_) {
-        while(!(user_query.run_) || queue_kafka->empty()) {
+        while(!(user_query.run_)) {
             if (kafka_consumer_client::run_ == false) {
                 return NULL;
             }
