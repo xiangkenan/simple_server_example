@@ -19,9 +19,9 @@ LDFLAGS=  -L/usr/local/lib -lrdkafka \
 
 CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis -lpthread
 
-all: crm_noah clean
+all: crm_noah_online clean
 
-crm_noah: kafka_consume.o main.o userquery.o string_tools.o ofo_crm.o noah_config.o queue.o city.o
+crm_noah_online: kafka_consume.o main.o userquery.o string_tools.o ofo_crm.o noah_config.o queue.o city.o
 	${CC} $^ -o $@ ${CFLAG}
 
 main.o:

@@ -5,7 +5,7 @@
 ##./run -b 192.168.30.236:9092 -t userevents -p 1
 #./run
 
-proc="./crm_noah"
+proc="./crm_noah_online"
 ulimit -c unlimited
 
 if [[ $1 == "stop" ]]; then
