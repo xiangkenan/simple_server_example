@@ -15,11 +15,11 @@ UserQuery::UserQuery() {
 
 }
 
-bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config) {
-    if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
-        LOG(WARNING) << "connect userid redis failed" ;
-        return false;
-    }
+bool UserQuery::InitRedis(Redis* redis_user_trigger_config) {
+    //if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+    //    LOG(WARNING) << "connect userid redis failed" ;
+    //    return false;
+    //}
 
     if (!redis_user_trigger_config->Connect("10.6.37.54", 3000, "MKL7cOEehQf8aoIBtHxs")) {
         LOG(WARNING) << "connect user_trigger_config redis failed" ;
@@ -37,20 +37,19 @@ bool UserQuery::InitRedis(Redis* redis_userid, Redis* redis_user_trigger_config)
 bool UserQuery::Run(const string& behaver_message, string& log_str) {
     KafkaData kafka_data;
 
-    Redis redis_userid;
     Redis redis_user_trigger_config;
 
-    if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+    if(!InitRedis(&redis_user_trigger_config)) {
         return false;
     }
 
-    if(!Parse_kafka_data(&redis_userid, &redis_user_trigger_config, behaver_message, &kafka_data)) {
+    if(!Parse_kafka_data(&redis_user_trigger_config, behaver_message, &kafka_data)) {
         log_str = kafka_data.log_str;
         return false;
     }
 
 
-    if (!HandleProcess(&redis_userid, &redis_user_trigger_config, &kafka_data)) {
+    if (!HandleProcess(&redis_user_trigger_config, &kafka_data)) {
         log_str = kafka_data.log_str;
         return false;
     }
@@ -150,7 +149,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 }
 
 //1:满足配置 2:不满足配置 -1:出错
-bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_config, KafkaData *kafka_data) {
+bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
     kafka_data->log_str += kafka_data->uid;
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
@@ -341,10 +340,10 @@ void UserQuery::Detect() {
     while(true) {
         run_ = false;
         sleep(2);
-        Redis redis_userid, redis_user_trigger_config;
+        Redis redis_user_trigger_config;
         LOG(WARNING) << "start update config every min";
         //初始化redis
-        if(!InitRedis(&redis_userid, &redis_user_trigger_config)) {
+        if(!InitRedis(&redis_user_trigger_config)) {
             LOG(ERROR) << "redis init error";
             continue;
         }
@@ -451,7 +450,7 @@ bool UserQuery::LoadInitialRangeData() {
 }
 
 //获取用户uid,action
-bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
+bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
     Json::Reader reader;
     Json::Value user_json;
 
@@ -471,17 +470,25 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
             continue;
         }
 
+        //连接解密userid redis
+        Redis redis_userid;
+        if (!redis_userid.Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+            LOG(WARNING) << "connect userid redis failed" ;
+            return false;
+        }
+            
+
         string user_id_md5 = user_json["content"][i]["userid"].asString();
         if (user_id_md5.size() != 32) {
             continue;
         }
 
-        redis_userid->HGet("user_info_"+user_id_md5, "userid", &(kafka_data->uid));
+        redis_userid.HGet("user_info_"+user_id_md5, "userid", &(kafka_data->uid));
         if(kafka_data->uid.empty()) {
             continue;
         }
 
-        redis_userid->HGet("user_info_"+user_id_md5, "telephone", &(kafka_data->tel));
+        redis_userid.HGet("user_info_"+user_id_md5, "telephone", &(kafka_data->tel));
         if(kafka_data->tel.empty()) {
             continue;
         }
