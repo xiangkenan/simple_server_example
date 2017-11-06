@@ -26,7 +26,7 @@ void *run_queue(void *run_queue_fun) {
 }
 
 int main(int argc, char **argv) {
-    FLAGS_logbufsecs = 0;
+    //FLAGS_logbufsecs = 0;
     FLAGS_max_log_size = 2000;
     FLAGS_log_dir = "./log";
     google::InitGoogleLogging("user_behaviour");

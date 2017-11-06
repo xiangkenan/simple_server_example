@@ -27,10 +27,10 @@ bool OfoCrm::run_operate(QueueKafka* queue_kafka) {
     //消费queue
     while(kafka_consumer_client::run_) {
         while(!(user_query.run_)) {
-            if (kafka_consumer_client::run_ == false) {
+            if (queue_kafka->empty() || kafka_consumer_client::run_ == false) {
                 return NULL;
             }
-            usleep(1000);
+            usleep(100);
         }
         string log_str;
         struct timeval start_time;
