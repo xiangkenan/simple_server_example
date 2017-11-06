@@ -124,6 +124,15 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 //redis_user_trigger_config->HSet("push:"+id+":"+kafka_data->uid+kafka_data->tel, "jump_url", tel_push_msg[j].jump_url);
                 //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
                 //*************
+                string id = "1";
+                Json::Value push_json;
+                Json::FastWriter writer;
+                push_json["cid"] = kafka_data->uid+ kafka_data->tel;
+                push_json["content"] = tel_push_msg[j].content;
+                push_json["jump_url"] = tel_push_msg[j].jump_url;
+                string push_json_str = writer.write(push_json);
+                redis_user_trigger_config->Lpush("push:"+id, push_json_str);
+                
                 //string id = "1";
                 //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
                 //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
@@ -477,11 +486,11 @@ bool UserQuery::Parse_kafka_data(Redis* redis_userid, Redis* redis_user_trigger_
         }
 
         //白名单过滤
-        //string white_user;
-        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        //if (white_user != "crm_write") {
-        //    return false;
-        //}
+        string white_user;
+        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        if (white_user != "crm_write") {
+            return false;
+        }
 
         //测试
         //kafka_data->uid = "554345677";
