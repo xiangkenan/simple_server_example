@@ -64,6 +64,7 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
 bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_config) {
     int ret;
     char buf[1024];
+    kafka_data->log_str += "\tMSG PUSH:\t";
 
     for (size_t i = 0; i < kafka_data->action_id.size(); ++i) {
         int limit;
@@ -76,20 +77,20 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
         string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=activity," + kafka_data->action_id[i];
         if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
             LOG(WARNING) << "riskmgt interface error";
-            return false;
+            continue;
         }
 
         Json::Value result;
         result = get_url_json(buf);
+        LOG(INFO) << limit << "<==>" << result["data"][0]["frequence"][0]["value"].asString() << ":" << kafka_data->action_id[i];
         if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str()) && limit != 0) {
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
-            return false;
+            continue;
         } else {
-            LOG(INFO) << limit << "<==>" << result["data"][0]["frequence"][0]["value"].asString();
             string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
             if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
                 LOG(WARNING) << "riskmgt interface error";
-                return false;
+                continue;
             }
         }
 
@@ -112,35 +113,24 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 //*************
                 if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
-                    kafka_data->log_str += "(send message error!!)";
+                    kafka_data->log_str += "{send message error!!}";
                 }
                 //*************
-                kafka_data->log_str += "=>(send message to " + kafka_data->tel + ":" + 
-                    tel_push_msg[j].content + ")";
+                kafka_data->log_str += "●●{send message to " + kafka_data->tel + ":" + 
+                    tel_push_msg[j].content + "}";
             }
             if (tel_push_msg[j].type == "push") {
-                //int id = (atoi(kafka_data->uid.c_str()))%5+1;
-                //redis_user_trigger_config->HSet("push:"+id+":"+kafka_data->uid+kafka_data->tel, "content", tel_push_msg[j].content);
-                //redis_user_trigger_config->HSet("push:"+id+":"+kafka_data->uid+kafka_data->tel, "jump_url", tel_push_msg[j].jump_url);
-                //redis_user_trigger_config->Lpush("hash:push#"+id,kafka_data->uid+ kafka_data->tel);
-                //*************
-                string id = "1";
+                int id = (atoi(kafka_data->uid.c_str()))%1+1;
                 Json::Value push_json;
                 Json::FastWriter writer;
                 push_json["cid"] = kafka_data->uid+ kafka_data->tel;
                 push_json["content"] = tel_push_msg[j].content;
                 push_json["jump_url"] = tel_push_msg[j].jump_url;
                 string push_json_str = writer.write(push_json);
-                redis_user_trigger_config->Lpush("push:"+id, push_json_str);
+                redis_user_trigger_config->Lpush("push:"+to_string(id), push_json_str);
                 
-                //string id = "1";
-                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "content", tel_push_msg[j].content);
-                //redis_user_trigger_config->HSet("push:"+id+":8100255018211097924", "jump_url", tel_push_msg[j].jump_url);
-                //redis_user_trigger_config->Lpush("push:"+id,"8100255018211097924"); //测试代码
-                //*************
-
-                kafka_data->log_str += "=>(send push to "+kafka_data->uid+":" + 
-                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ ")";
+                kafka_data->log_str += "●●{send push to "+kafka_data->uid+":" + 
+                    tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
             }
         }
     }
@@ -150,14 +140,14 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str += kafka_data->uid;
+    kafka_data->log_str += "userid:" + kafka_data->uid;
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        kafka_data->log_str += "|||||activity:" + iter->first + "=>";
+        kafka_data->log_str += "●|●activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
             char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
@@ -203,6 +193,8 @@ bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka
     if (lasso_config_map.empty()) {
         kafka_data->log_str += ">>>>>:config empty";
     }
+
+    kafka_data->log_str += "]";
 
     if (kafka_data->action_id.size() > 0) {
         return true;
