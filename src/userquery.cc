@@ -86,6 +86,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
             return false;
         } else {
+            LOG(INFO) << limit << "<==>" << result["data"][0]["frequence"][0]["value"].asString();
             string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
             if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
                 LOG(WARNING) << "riskmgt interface error";
@@ -107,13 +108,13 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             replace_all_distinct(tel_push_msg[j].content,"{latest.order.city}", "");
 
             if (tel_push_msg[j].type == "message") {
-                //string url = "192.168.2.123/now";
-                //string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
-                //string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
+                string url = "192.168.2.123/now";
+                string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
+                string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 //*************
-                //if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
-                //    kafka_data->log_str += "(send message error!!)";
-                //}
+                if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
+                    kafka_data->log_str += "(send message error!!)";
+                }
                 //*************
                 kafka_data->log_str += "=>(send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + ")";
@@ -157,7 +158,7 @@ bool UserQuery::HandleProcess(Redis* redis_userid, Redis* redis_user_trigger_con
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        kafka_data->log_str += "|activity:" + iter->first + "=>";
+        kafka_data->log_str += "|||||activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
             char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
