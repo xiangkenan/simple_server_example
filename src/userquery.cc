@@ -65,6 +65,9 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
     int ret;
     char buf[1024];
     kafka_data->log_str += "\tMSG PUSH:\t";
+    if (kafka_data->uid == "554345677") {
+        kafka_data->uid = "81002550";
+    }
 
     for (size_t i = 0; i < kafka_data->action_id.size(); ++i) {
         int limit;
@@ -82,7 +85,6 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
         Json::Value result;
         result = get_url_json(buf);
-        LOG(INFO) << limit << "<==>" << result["data"][0]["frequence"][0]["value"].asString() << ":" << kafka_data->action_id[i];
         if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str()) && limit != 0) {
             kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
             continue;
@@ -109,7 +111,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
             if (tel_push_msg[j].type == "message") {
                 string url = "192.168.2.123/now";
-                string args = "to=+" + kafka_data->tel + "+&templateId=crm_notify&context="+tel_push_msg[j].content;
+                string args = "to=" + kafka_data->tel + "&templateId=crm_notify&context="+tel_push_msg[j].content;
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 //*************
                 if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
@@ -140,14 +142,14 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str += "userid:" + kafka_data->uid;
+    kafka_data->log_str += "action:"+kafka_data->action+" userid:" + kafka_data->uid;
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        kafka_data->log_str += "●|●activity:" + iter->first + "=>";
+        kafka_data->log_str += "(●|●)activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
             char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
@@ -493,7 +495,9 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         }
 
         //测试
-        //kafka_data->uid = "554345677";
+        if (kafka_data->tel == "18211097924") {
+            kafka_data->uid = "554345677";
+        }
 
         //获取用户离线数据
         string user_offline_data;
