@@ -66,7 +66,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
         }
 
         string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=activity," + kafka_data->action_id[i];
-        if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+        if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
             LOG(WARNING) << "riskmgt interface error";
             continue;
         }
@@ -79,7 +79,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             continue;
         } else {
             string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
-            if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+            if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
                 LOG(WARNING) << "riskmgt interface error";
                 continue;
             }
@@ -87,7 +87,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
         //每个活动 每人只发送一次短信或push
         url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=user_id," + kafka_data->action_id[i] + "_" + kafka_data->uid;
-        if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+        if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
             LOG(WARNING) << "riskmgt interface error";
             continue;
         }
