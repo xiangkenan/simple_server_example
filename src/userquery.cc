@@ -16,11 +16,6 @@ UserQuery::UserQuery() {
 }
 
 bool UserQuery::InitRedis(Redis* redis_user_trigger_config) {
-    //if (!redis_userid->Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
-    //    LOG(WARNING) << "connect userid redis failed" ;
-    //    return false;
-    //}
-
     if (!redis_user_trigger_config->Connect("10.6.37.54", 3000, "MKL7cOEehQf8aoIBtHxs")) {
         LOG(WARNING) << "connect user_trigger_config redis failed" ;
         return false;
