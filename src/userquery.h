@@ -65,7 +65,8 @@ class UserQuery {
         std::string dump_hour_time;
         std::string update_increment_hour_time;
         //是否强行dump 和 update开关
-        std::string switch_dump_update;
+        std::string switch_update;
+        std::string switch_dump;
 };
 
 #endif

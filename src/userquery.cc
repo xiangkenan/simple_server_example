@@ -350,29 +350,29 @@ void UserQuery::Detect() {
             LOG(ERROR) << "dump file failed!";
         }
         
-        sleep(60);
+        sleep(30);
     }
 }
 
 bool UserQuery::DumpDayFile() {
-    if (get_now_hour() != dump_hour_time) {
-        if (switch_dump_update != "yes") {
+    string date = get_now_date();
+    if (switch_dump != "yes") {
+        if (get_now_hour() != dump_hour_time)
+            return true;
+
+
+        if (date == dump_file_every_date) {
             return true;
         }
+
+        dump_file_every_date = date;
     }
-
-    string date = get_now_date();
-
-    if (date == dump_file_every_date) {
-        return true;
-    }
-
-    dump_file_every_date = date;
     LOG(WARNING) << "start dump file :" << date;
 
     string dump_path = "mv  ./data/dump/" + date + " ./data/dump/" + date + "." + get_now_hour_min_sec();
+    cout << dump_path << endl;
     system(dump_path.c_str());
-    string dump_path = "mkdir -p ./data/dump/" + date;
+    dump_path = "mkdir -p ./data/dump/" + date;
     system(dump_path.c_str());
     for (unordered_map<std::string, unordered_map<long, vector<TimeRange>>>::iterator iter = time_range_origin.begin();
             iter != time_range_origin.end(); iter++) {
@@ -381,23 +381,24 @@ bool UserQuery::DumpDayFile() {
             continue;
         }
     }
+    LOG(WARNING) << "dump file :" << iter->first << " success";
+
     return true;
 }
 
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != update_increment_hour_time) {
-        if (switch_dump_update != "yes") {
+    string date = get_now_date();
+    if (switch_update != "yes") {
+        if (get_now_hour() != update_increment_hour_time)
+            return true;
+
+        if (date == last_update_increment_date) {
             return true;
         }
+
+        last_update_increment_date = date;
     }
 
-    string date = get_now_date();
-
-    if (date == last_update_increment_date) {
-        return true;
-    }
-
-    last_update_increment_date = date;
     LOG(WARNING) << "start update increment user data....." << date;
 
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
@@ -432,8 +433,10 @@ bool UserQuery::InitConf(string conf_file) {
             update_increment_hour_time = line_vec[1];
         } else if (line_vec[0] == "dump_time_hour") {
             dump_hour_time = line_vec[1];
-        } else if (line_vec[0] == "switch_dump_update") {
-            switch_dump_update = line_vec[1];
+        } else if (line_vec[0] == "switch_update") {
+            switch_update = line_vec[1];
+        } else if (line_vec[0] == "switch_dump") {
+            switch_dump = line_vec[1];
         } else {
             LOG(ERROR) << "unknown field in conf file!!";
             return false;
