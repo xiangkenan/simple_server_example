@@ -370,7 +370,6 @@ bool UserQuery::DumpDayFile() {
     LOG(WARNING) << "start dump file :" << date;
 
     string dump_path = "mv  ./data/dump/" + date + " ./data/dump/" + date + "." + get_now_hour_min_sec();
-    cout << dump_path << endl;
     system(dump_path.c_str());
     dump_path = "mkdir -p ./data/dump/" + date;
     system(dump_path.c_str());
@@ -381,7 +380,7 @@ bool UserQuery::DumpDayFile() {
             continue;
         }
     }
-    LOG(WARNING) << "dump file :" << iter->first << " success";
+    LOG(WARNING) << "dump all file success";
 
     return true;
 }
