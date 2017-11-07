@@ -282,7 +282,9 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
-    if (config.filter_id == "realtime.order.action")
-        return true;
+    if (config.filter_id == "realtime.order.action") {
+        kafka_data->log_str += "<add illegal field:"+config.filter_id + ">";
+        return false;
+    }
     return data_core_operate(config, type_map_operate[config.filter_id], kafka_data);
 }

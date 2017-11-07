@@ -352,13 +352,14 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::DumpDayFile() {
-    if (get_now_hour() != "05") {
+    if (get_now_hour() != "19") {
         return true;
     }
 
     string date = get_now_date();
 
     if (date == dump_file_every_date) {
+        LOG(WARNING) << "草拟吗";
         return true;
     }
 
