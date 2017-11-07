@@ -5,6 +5,7 @@ using namespace std;
 UserQuery::UserQuery() {
     run_ = false;
     last_update_increment_date = "0";
+    dump_file_every_date = "0";
 
     time_range_file.insert(make_pair("order.repair_order", "repair_order"));
     time_range_file.insert(make_pair("order.order", "history_order"));
@@ -72,8 +73,9 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
         Json::Value result;
         result = get_url_json(buf);
-        if (limit < atoi(result["data"][0]["frequence"][0]["value"].asString().c_str()) && limit != 0) {
-            kafka_data->log_str += "=>:hit_freq: activity:" + kafka_data->action_id[i] + "full";
+        int limit_num_cur = atoi(result["data"][0]["frequence"][0]["value"].asString().c_str());
+        if (limit < limit_num_cur && limit != 0) {
+            kafka_data->log_str += "(=>:hit freq activity:" + kafka_data->action_id[i] + " full <"+to_string(limit_num_cur)+">)";
             continue;
         } else {
             string url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
@@ -320,6 +322,7 @@ void UserQuery::Detect() {
     while(true) {
         run_ = false;
         sleep(2);
+        InitConf("./conf/conf.txt");
         Redis redis_user_trigger_config;
         LOG(WARNING) << "start update config every min";
         //初始化redis
@@ -352,20 +355,23 @@ void UserQuery::Detect() {
 }
 
 bool UserQuery::DumpDayFile() {
-    if (get_now_hour() != "19") {
-        return true;
+    if (get_now_hour() != dump_hour_time) {
+        if (switch_dump_update != "yes") {
+            return true;
+        }
     }
 
     string date = get_now_date();
 
     if (date == dump_file_every_date) {
-        LOG(WARNING) << "草拟吗";
         return true;
     }
 
     dump_file_every_date = date;
     LOG(WARNING) << "start dump file :" << date;
 
+    string dump_path = "mv  ./data/dump/" + date + " ./data/dump/" + date + "." + get_now_hour_min_sec();
+    system(dump_path.c_str());
     string dump_path = "mkdir -p ./data/dump/" + date;
     system(dump_path.c_str());
     for (unordered_map<std::string, unordered_map<long, vector<TimeRange>>>::iterator iter = time_range_origin.begin();
@@ -379,8 +385,10 @@ bool UserQuery::DumpDayFile() {
 }
 
 bool UserQuery::UpdateDayIncrement() {
-    if (get_now_hour() != "04") {
-        return true;
+    if (get_now_hour() != update_increment_hour_time) {
+        if (switch_dump_update != "yes") {
+            return true;
+        }
     }
 
     string date = get_now_date();
@@ -400,6 +408,37 @@ bool UserQuery::UpdateDayIncrement() {
         }
     }
 
+    return true;
+}
+
+bool UserQuery::InitConf(string conf_file) {
+    ifstream fin(conf_file);
+    if (!fin) {
+        LOG(ERROR) << "load "<< conf_file << " failed!!";
+        return false;
+    }
+
+    LOG(INFO) << "start loading file:" << conf_file;
+    string line;
+    while (getline(fin, line)) {
+        if ((line = Trim(line)).empty()) {
+            continue;
+        }
+        vector<string> line_vec;
+        Split(line, "=", &line_vec);
+        if (line_vec.size() != 2)
+            return false;
+        if (line_vec[0] == "update_increment_hour_time") {
+            update_increment_hour_time = line_vec[1];
+        } else if (line_vec[0] == "dump_time_hour") {
+            dump_hour_time = line_vec[1];
+        } else if (line_vec[0] == "switch_dump_update") {
+            switch_dump_update = line_vec[1];
+        } else {
+            LOG(ERROR) << "unknown field in conf file!!";
+            return false;
+        }
+    }
 
     return true;
 }

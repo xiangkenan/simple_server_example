@@ -26,6 +26,7 @@ class UserQuery {
         bool Run(const std::string& behaver_message, std::string& log_str);
         bool run_;
     private:
+        bool InitConf(std::string conf_file);
         bool InitRedis(Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_user_trigger_config, KafkaData* kafka_data);
         bool Parse_kafka_data(Redis* redis_user_trigger_config, std::string behaver_message, KafkaData* kafka_data);
@@ -60,6 +61,11 @@ class UserQuery {
         std::string last_update_increment_date;
         std::string dump_file_every_date;
         City city;
+
+        std::string dump_hour_time;
+        std::string update_increment_hour_time;
+        //是否强行dump 和 update开关
+        std::string switch_dump_update;
 };
 
 #endif
