@@ -58,20 +58,24 @@ bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
     } else if (config.filter_id == "userprofile.competitor") {
         not_contain = "BITMAP_NONE";
         user_msg_vec.clear();
-        if (user_msg.find("摩拜单车") != string::npos) 
-            user_msg_vec.push_back("1");
-        if (user_msg.find("小蓝单车") != string::npos) 
-            user_msg_vec.push_back("2");
-        if (user_msg.find("一步单车") != string::npos) 
-            user_msg_vec.push_back("4");
-        if (user_msg.find("优拜单车") != string::npos) 
-            user_msg_vec.push_back("32");
-        if (user_msg.find("hello单车") != string::npos) 
-            user_msg_vec.push_back("64");
-        if (user_msg.find("小鸣单车") != string::npos) 
-            user_msg_vec.push_back("2048");
-        if (user_msg.find("永安行") != string::npos) 
-            user_msg_vec.push_back("16384");
+        vector<string> jingpin_vec;
+        Split(user_msg, ",", &jingpin_vec);
+        for (size_t i = 0; i < jingpin_vec.size(); ++i) {
+            if (jingpin_vec[i] == "摩拜单车")
+                user_msg_vec.push_back("1");
+            if (jingpin_vec[i] == "小蓝单车")
+                user_msg_vec.push_back("2");
+            if (jingpin_vec[i] == "一步单车")
+                user_msg_vec.push_back("4");
+            if (jingpin_vec[i] == "优拜单车")
+                user_msg_vec.push_back("32");
+            if (jingpin_vec[i] == "hello单车")
+                user_msg_vec.push_back("64");
+            if (jingpin_vec[i] == "小鸣单车")
+                user_msg_vec.push_back("2048");
+            if (jingpin_vec[i] == "永安行")
+                user_msg_vec.push_back("16384");
+        }
     } else if (config.filter_id == "offline.silence") {
         not_contain = "jkashdlk";
     } else {
