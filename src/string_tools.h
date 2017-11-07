@@ -15,6 +15,7 @@
 #include "config_struct.h"
 
 int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
+std::string add_date_zero(const struct tm& p, std::string flag);
 std::string get_now_date();
 std::string get_now_hour();
 std::string get_now_hour_min_sec();

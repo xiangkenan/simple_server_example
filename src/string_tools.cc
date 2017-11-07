@@ -43,8 +43,34 @@ string get_now_hour() {
     struct tm p;
     time(&timep);
     FastSecondToDate(timep, &p, 8);
-    string date_now = to_string(p.tm_hour);
+    string date_now = add_date_zero(p, "hour");
     return date_now;
+}
+
+string add_date_zero(const struct tm& p, string flag) {
+    string hour;
+    string min;
+    string sec;
+    if (p.tm_hour < 10)
+        hour = "0" + to_string(p.tm_hour);
+    else
+        hour = to_string(p.tm_hour);
+    if (p.tm_min < 10)
+        min = "0" + to_string(p.tm_min);
+    else
+        min = to_string(p.tm_min);
+    if (p.tm_sec < 10)
+        sec = "0" + to_string(p.tm_sec);
+    else
+        sec = to_string(p.tm_sec);
+
+    if (flag == "hour") {
+        return hour;
+    } else if (flag == "all") {
+        return hour + ":" + min + ":" + sec;
+    } else {
+        return "";
+    }
 }
 
 string get_now_hour_min_sec() {
@@ -52,11 +78,7 @@ string get_now_hour_min_sec() {
     struct tm p;
     time(&timep);
     FastSecondToDate(timep, &p, 8);
-    string date_now;
-    if (p.tm_sec < 10)
-       date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":0" + to_string(p.tm_sec);
-    else
-       date_now = to_string(p.tm_hour) + ":" + to_string(p.tm_min) + ":" + to_string(p.tm_sec);
+    string date_now = add_date_zero(p, "all");
 
     return date_now;
 }
@@ -240,12 +262,19 @@ void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_r
     }
 
     for (size_t i = 0; i < time_range_vec->size(); ++i) {
-        if ((*time_range_vec)[i].date <= (*time_range_vec_last)[time_range_vec_last->size()-1].date) {
+        if ((*time_range_vec)[i].date < (*time_range_vec_last)[time_range_vec_last->size()-1].date) {
             continue;
+        } else if ((*time_range_vec)[i].date == (*time_range_vec_last)[time_range_vec_last->size()-1].date) {
+            if (time_range_vec_last->size() == 1) {
+                (*time_range_vec_last)[time_range_vec_last->size()-1].num = (*time_range_vec)[i].num;
+            } else {
+                (*time_range_vec_last)[time_range_vec_last->size()-1].num = 
+                    (*time_range_vec_last)[time_range_vec_last->size()-2].num + (*time_range_vec)[i].num;
+            }
+        } else {
+            (*time_range_vec)[i].num += (*time_range_vec_last)[time_range_vec_last->size()-1].num;
+            time_range_vec_last->push_back((*time_range_vec)[i]);
         }
-
-        (*time_range_vec)[i].num += (*time_range_vec_last)[time_range_vec_last->size()-1].num;
-        time_range_vec_last->push_back((*time_range_vec)[i]);
     }
 }
 

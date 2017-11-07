@@ -11,9 +11,9 @@ if [[ $1 == "stop" ]]; then
 elif [[ $1 == "restart" ]]; then
     ps -aux | grep "$proc" | grep -v grep | awk '{print $2}' | xargs kill -9
     sleep 2
-    nohup $proc 2>&1 > ./log/run.log &
+    nohup $proc 2>&1 > ./log/run_error.log &
 elif [[ $1 == "start" ]]; then
-    nohup $proc 2>&1 ./log/run.log &
+    nohup $proc 2>&1 ./log/run_error.log &
 else
     echo "please input start|restart|stop?"
 fi

@@ -259,7 +259,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             continue;
         }
 
-        cout << all_config << endl;
+        //cout << all_config << endl;
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
@@ -350,7 +350,7 @@ void UserQuery::Detect() {
             LOG(ERROR) << "dump file failed!";
         }
         
-        sleep(30);
+        sleep(60);
     }
 }
 
