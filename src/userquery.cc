@@ -85,6 +85,19 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             }
         }
 
+        //每个活动 每人只发送一次短信或push
+        url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=user_id," + kafka_data->action_id[i] + "_" + kafka_data->uid;
+        if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, NULL, NULL)) != MURLE_OK) {
+            LOG(WARNING) << "riskmgt interface error";
+            continue;
+        }
+        result = get_url_json(buf);
+        string code = result["code"].asString();
+        if (code != "200") {
+            kafka_data->log_str += "(have already sent message)";
+            continue;
+        }
+
         //活动计数
         redis_user_trigger_config->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
 
@@ -176,7 +189,7 @@ bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka
         if (flag_hit == -1)
             continue;
 
-        kafka_data->log_str += "=>:regular_ok";
+        kafka_data->log_str += "=>:regular_pass";
         kafka_data->action_id.push_back(iter->first); //赋值action_id
         continue;
     }
@@ -380,7 +393,7 @@ bool UserQuery::DumpDayFile() {
             continue;
         }
     }
-    LOG(WARNING) << "dump all file success";
+    LOG(WARNING) << "dump all file success" << date;
 
     return true;
 }
@@ -398,7 +411,7 @@ bool UserQuery::UpdateDayIncrement() {
         last_update_increment_date = date;
     }
 
-    LOG(WARNING) << "start update increment user data....." << date;
+    LOG(WARNING) << "start update increment user data" << date;
 
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
@@ -407,6 +420,7 @@ bool UserQuery::UpdateDayIncrement() {
             continue;
         }
     }
+    LOG(WARNING) << "update all increment user data" << date;
 
     return true;
 }
