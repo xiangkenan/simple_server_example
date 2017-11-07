@@ -24,11 +24,14 @@ NoahConfigRead::NoahConfigRead(std::unordered_map<std::string, std::unordered_ma
     redis_field_map["order.weekday_order"] = "1004";
     redis_field_map["order.peak_order"] = "1005";
 
+    //自定义范围
+    redis_field_map["offline.register"] = "10000";
+
     //字段处理类型
+    type_map_operate["offline.register"] = 1;
     type_map_operate["offline.silence"] = 1;
     type_map_operate["userprofile.city"] = 1;
     type_map_operate["userprofile.competitor"] = 1;
-    type_map_operate["order.month_card"] = 1;
 
     type_map_operate["userprofile.oauth"] = 2;
     type_map_operate["userprofile.bond"] = 2;
@@ -47,6 +50,9 @@ NoahConfigRead::NoahConfigRead(std::unordered_map<std::string, std::unordered_ma
 
     type_map_operate["offline.bikeFailed"] = 5;
     type_map_operate["offline.orders"] = 5;
+
+    type_map_operate["order.month_card"] = 6;
+
 }
 
 bool NoahConfigRead::is_include(const BaseConfig& config, string user_msg) {
@@ -233,11 +239,15 @@ bool NoahConfigRead::is_big_small(const BaseConfig& config, int user_msg) {
  * 2:是， 否
  * 3:当前时间在 某个范围内
  * 4:规定范围内，订单是否满足条件（目前只判断是否满足条件） (区间值)
+ * 5:规定范围内，订单是否满足条件 (区间值)
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
     string user_msg;
-    if (flag != 4)
-       user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
+    if (flag != 4) {
+        if (!kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].isNull()) {
+            user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
+        }
+    }
 
     bool ret;
     int num = 0;
@@ -259,6 +269,10 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             num = is_time_range_value(config, kafka_data);
             ret = is_include(config, to_string(num));
             return write_log(config, ret, kafka_data, num);
+        case 6:
+            //月卡信息独有
+            ret = is_big_small(config, atoi(user_msg.c_str()));
+            return write_log(config, ret, kafka_data, atoi(user_msg.c_str()));
         default:
             kafka_data->log_str += "&未知字段:" + config.filter_id;
             return true;
@@ -268,8 +282,7 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
-    if (config.filter_id == "offline.register" || 
-            config.filter_id == "realtime.order.action")
+    if (config.filter_id == "realtime.order.action")
         return true;
     return data_core_operate(config, type_map_operate[config.filter_id], kafka_data);
 }

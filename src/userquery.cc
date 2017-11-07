@@ -183,8 +183,6 @@ bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka
         kafka_data->log_str += ">>>>>:config empty";
     }
 
-    kafka_data->log_str += "]";
-
     if (kafka_data->action_id.size() > 0) {
         return true;
     } else {
@@ -259,6 +257,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             continue;
         }
 
+        cout << all_config << endl;
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
@@ -496,8 +495,11 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         }
 
         if (kafka_data->offline_data_json["rv"]["7"] != "") {
+            //注册时间先不加一天
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
             kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
+            //注册天数 （10000）
+            kafka_data->offline_data_json["rv"]["10000"] = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
         }
 
         if (kafka_data->offline_data_json["rv"]["11"] != "") {
@@ -505,10 +507,12 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         }
 
         if (kafka_data->offline_data_json["rv"]["8"] != "") {
+            //认证时间先不加一天
             kafka_data->offline_data_json["rv"]["8"] =  distance_time_now(kafka_data->offline_data_json["rv"]["8"].asString());
         }
 
         if (kafka_data->offline_data_json["rv"]["1008"] != "") {
+            //首单时间先不加一天
             kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
         }
 
