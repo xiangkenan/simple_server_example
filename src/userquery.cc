@@ -26,11 +26,6 @@ bool UserQuery::InitRedis(Redis* redis_user_trigger_config) {
         return false;
     }
 
-    //if (!redis_user_trigger_config1->Connect("192.168.2.27", 6379, "spam_dev@ofo")) {
-    //    LOG(WARNING) << "connect user_trigger_config redis failed" ;
-    //    return false;
-    //}
-
     return true;
 }
 
@@ -65,9 +60,6 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
     int ret;
     char buf[1024];
     kafka_data->log_str += "\tMSG PUSH:\t";
-    if (kafka_data->uid == "554345677") {
-        kafka_data->uid = "81002550";
-    }
 
     for (size_t i = 0; i < kafka_data->action_id.size(); ++i) {
         int limit;
@@ -488,16 +480,14 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         }
 
         //白名单过滤
-        string white_user;
-        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        if (white_user != "crm_write") {
-            return false;
-        }
+        //string white_user;
+        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        //if (white_user != "crm_write") {
+        //    return false;
+        //}
 
         //测试
-        if (kafka_data->tel == "18211097924") {
-            kafka_data->uid = "554345677";
-        }
+        //kafka_data->uid = "554345677";
 
         //获取用户离线数据
         string user_offline_data;
