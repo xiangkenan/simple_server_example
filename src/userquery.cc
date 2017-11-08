@@ -94,8 +94,8 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
         result = get_url_json(buf);
         string code = result["code"].asString();
         if (code != "200") {
-            kafka_data->log_str += "(have already sent message)";
-            continue;
+            kafka_data->log_str += "(=>:hit freq userid full)";
+            return false;
         }
 
         //活动计数
@@ -143,7 +143,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str += "action:"+kafka_data->action+" userid:" + kafka_data->uid;
+    kafka_data->log_str += "date:" + kafka_data->user_behaviour_date + " action:"+kafka_data->action+" userid:" + kafka_data->uid + " ";
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
@@ -486,7 +486,6 @@ bool UserQuery::LoadInitialRangeData() {
 
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
-    cout << behaver_message << endl;
     Json::Reader reader;
     Json::Value user_json;
 
@@ -494,6 +493,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         return false;
     }
 
+    string user_behaviour_date =  behaver_message.substr(behaver_message.find("INFO ")+5, 19);
     string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6, string::npos);
     json_behaver_message[json_behaver_message.size()-1] = '\0';
     reader.parse(json_behaver_message.c_str(), user_json);
