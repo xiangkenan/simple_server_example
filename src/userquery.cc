@@ -27,8 +27,6 @@ bool UserQuery::GetQconfRedis(Redis* redis_handle, const string& config_qconf) {
         return false;
     }
     reader.parse(value, result);
-    cout << result["host"] << " " << result["port"] << " " << result["password"] << endl;
-
     if (!redis_handle->Connect(result["host"].asString().c_str(), result["port"].asInt(), result["password"].asString().c_str())) {
         LOG(WARNING) << "connect user_trigger_config redis failed" ;
         return false;
@@ -506,6 +504,10 @@ bool UserQuery::LoadInitialRangeData() {
     pthread_mutex_t mutex;
     pthread_mutex_init(&mutex, NULL);
     pthread_t id[time_range_file.size()];
+    ofstream ofile;
+    ofile.open("./conf/parallel_load_config.txt");
+    ofile.close();
+
     int i = -1;
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
@@ -520,18 +522,33 @@ bool UserQuery::LoadInitialRangeData() {
             LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
             return false;
         }
-
-        //unordered_map<long, vector<TimeRange>> base_vec;
-        //if (!LoadRangeOriginConfig("./data/"+iter->second+".txt", &base_vec)) {
-        //    return false;
-        //}
-        //time_range_origin.insert(make_pair(iter->first, base_vec));
     }
 
     void *thread_result;
     for (size_t i = 0; i < time_range_file.size(); ++i) {
         pthread_join(id[i], &thread_result);
     }
+
+    //查看文件加载是否失败
+    ifstream fin("./conf/parallel_load_config.txt");
+    if (!fin) {
+        LOG(ERROR) << "no load file!";
+        return false;
+    }
+
+    string line;
+    while (getline(fin, line)) {
+        if ((line = Trim(line)).empty()) {
+            continue;
+        }
+        if (line.find("false") != string::npos) {
+            LOG(ERROR) << "load order file failed!!";
+            return false;
+        }
+    }
+
+    cout <<"加载文件成功" << endl;
+
 
     return true;
 }
