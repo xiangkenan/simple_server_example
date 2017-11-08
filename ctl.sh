@@ -3,7 +3,7 @@
 #./run -b 192.168.30.236:9092 -t userevents -p 1
 
 export LD_LIBRARY_PATH=/usr/local/lib
-export LD_LIBRARY_PATH=/usr/local/qconf/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/qconf/lib
 proc="./crm_noah_online"
 ulimit -c unlimited
 
