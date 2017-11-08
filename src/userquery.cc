@@ -13,12 +13,30 @@ UserQuery::UserQuery() {
     time_range_file.insert(make_pair("order.weekday_order", "weekday_order"));
     time_range_file.insert(make_pair("order.peak_order", "peak_order"));
     time_range_file.insert(make_pair("offline.bikeFailed", "bike_failed"));
-
 }
 
-bool UserQuery::InitRedis(Redis* redis_user_trigger_config) {
-    if (!redis_user_trigger_config->Connect("10.6.37.54", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+bool UserQuery::GetQconfRedis(Redis* redis_handle, const string& config_qconf) {
+    Json::Reader reader;
+    Json::Value result;
+    char value[QCONF_CONF_BUF_MAX_LEN];
+    int ret = qconf_get_conf(config_qconf.c_str(), value, sizeof(value), NULL);
+    if (ret != QCONF_OK) {
+        LOG(ERROR) << "Qconf connect failed!";
+        return false;
+    }
+    reader.parse(value, result);
+    cout << result["host"] << " " << result["port"] << " " << result["password"] << endl;
+
+    if (!redis_handle->Connect(result["host"].asString().c_str(), result["port"].asInt(), result["password"].asString().c_str())) {
         LOG(WARNING) << "connect user_trigger_config redis failed" ;
+        return false;
+    }
+
+    return true;
+}
+
+bool UserQuery::InitRedis(Redis* redis_user_trigger_config) { Json::Reader reader;
+    if (!GetQconfRedis(redis_user_trigger_config, "/Dba/redis/prc/online/ofo_crm/connection")) {
         return false;
     }
 
@@ -123,6 +141,13 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                     tel_push_msg[j].content + "}";
             }
             if (tel_push_msg[j].type == "push") {
+
+                //连接push redis
+                //Redis redis_push;
+                //if (!GetQconfRedis(&redis_push, "/Dba/redis/prc/online/ofo_push/connection")) {
+                //    return false;
+                //}
+
                 //int id = (atoi(kafka_data->uid.c_str()))%1+1;
                 //Json::Value push_json;
                 //Json::FastWriter writer;
@@ -130,7 +155,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 //push_json["content"] = tel_push_msg[j].content;
                 //push_json["jump_url"] = tel_push_msg[j].jump_url;
                 //string push_json_str = writer.write(push_json);
-                //redis_user_trigger_config->Lpush("push:"+to_string(id), push_json_str);
+                //redis_push->Lpush("push:"+to_string(id), push_json_str);
                 
                 kafka_data->log_str += "●●{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
@@ -459,6 +484,12 @@ bool UserQuery::InitConf(string conf_file) {
 }
 
 bool UserQuery::Init() {
+    int ret = qconf_init();
+    if (ret != QCONF_OK) {
+        LOG(ERROR) << "Failed to init qconf!";
+        return false;
+    }
+
     if(!LoadInitialRangeData()) {
         LOG(ERROR) << "init file date error" << endl;
         return false;
@@ -542,6 +573,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         //获取用户离线数据
         string user_offline_data;
         redis_user_trigger_config->Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
+
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
         string json_1006 = kafka_data->offline_data_json["rv"]["1006"].asString();

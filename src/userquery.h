@@ -17,6 +17,7 @@
 #include "noah_config.h"
 #include "config_struct.h"
 #include "city.h"
+#include "qconf.h"
 
 class UserQuery {
     public:
@@ -26,6 +27,7 @@ class UserQuery {
         bool Run(const std::string& behaver_message, std::string& log_str);
         bool run_;
     private:
+        bool GetQconfRedis(Redis* redis_handle, const std::string& config_qconf);
         bool InitConf(std::string conf_file);
         bool InitRedis(Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_user_trigger_config, KafkaData* kafka_data);

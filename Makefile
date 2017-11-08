@@ -7,14 +7,16 @@ INCLUDE=  -I/usr/local/include/librdkafka \
 		  -I./lib/glog/include \
 		  -I./lib/jsoncpp/include \
 		  -I./lib/curl/include \
-		  -I./lib/murl/include
+		  -I./lib/murl/include \
+		  -I/usr/local/qconf/include
 
 LDFLAGS=  -L/usr/local/lib -lrdkafka \
 		  -L./lib/glog/lib -lglog -Wl,-rpath,./lib/glog/lib \
 		  -L./lib/jsoncpp/lib -ljsoncpp \
 		  -L./lib/curl/lib -lcurl \
 		  -L./lib/curl/lib -lcares \
-		  -L./lib/murl/lib -lmurl
+		  -L./lib/murl/lib -lmurl \
+		  -L/usr/local/qconf/lib -lqconf
 
 
 CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis -lpthread
