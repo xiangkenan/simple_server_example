@@ -515,8 +515,9 @@ bool UserQuery::LoadInitialRangeData() {
         ParallelLoadConfig* parallel_conf = new ParallelLoadConfig();
         parallel_conf->field_name = iter->first;
         parallel_conf->file_name = iter->second;
-        parallel_conf->time_range_origin = time_range_origin;
+        parallel_conf->time_range_origin = &time_range_origin;
         parallel_conf->mutex = mutex;
+        cout << "内部地址:" << parallel_conf->time_range_origin << endl;
         int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)parallel_conf);
         if (ret != 0) {
             LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
@@ -527,6 +528,11 @@ bool UserQuery::LoadInitialRangeData() {
     void *thread_result;
     for (size_t i = 0; i < time_range_file.size(); ++i) {
         pthread_join(id[i], &thread_result);
+    }
+
+    if (time_range_file.size() <= 0) {
+        LOG(ERROR) << "parallel load conf failed!!";
+        return false;
     }
 
     //查看文件加载是否失败
@@ -546,9 +552,6 @@ bool UserQuery::LoadInitialRangeData() {
             return false;
         }
     }
-
-    cout <<"加载文件成功" << endl;
-
 
     return true;
 }

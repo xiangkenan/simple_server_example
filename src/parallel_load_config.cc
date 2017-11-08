@@ -18,7 +18,7 @@ void* parallel_load_config(void* arg) {
         return NULL;
     }
 
-    parallel_conf.time_range_origin.insert(make_pair(parallel_conf.field_name, base_vec));
+    (parallel_conf.time_range_origin)->insert(make_pair(parallel_conf.field_name, base_vec));
 
     return NULL;
 }
