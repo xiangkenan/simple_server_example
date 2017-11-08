@@ -493,7 +493,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
         return false;
     }
 
-    string user_behaviour_date =  behaver_message.substr(behaver_message.find("INFO ")+5, 19);
+    kafka_data->user_behaviour_date =  behaver_message.substr(behaver_message.find("INFO ")+5, 19);
     string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6, string::npos);
     json_behaver_message[json_behaver_message.size()-1] = '\0';
     reader.parse(json_behaver_message.c_str(), user_json);
