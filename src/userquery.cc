@@ -86,7 +86,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
         }
 
         //每个活动 每人只发送一次短信或push
-        url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=user_id," + kafka_data->action_id[i] + "_" + kafka_data->uid;
+        url = "http://192.168.3.127:9000/riskmgt/antispam?param=freq&bid=10038&kv1=user_id," + kafka_data->action_id[i] + "_" + kafka_data->uid;
         if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
             LOG(WARNING) << "riskmgt interface error";
             continue;
@@ -109,7 +109,6 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             replace_all_distinct(tel_push_msg[j].content, "{register.city}", kafka_data->userprofile_city);
             replace_all_distinct(tel_push_msg[j].content,"{register.days}", kafka_data->register_day);
             replace_all_distinct(tel_push_msg[j].content,"{accumulate.orders}", kafka_data->order_num);
-            replace_all_distinct(tel_push_msg[j].content,"{latest.order.city}", "");
 
             if (tel_push_msg[j].type == "message") {
                 string url = "192.168.2.123/now";
@@ -272,7 +271,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             continue;
         }
 
-        //cout << all_config << endl;
+        cout << all_config << endl;
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
