@@ -23,7 +23,7 @@ CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -l
 
 all: crm_noah_online clean
 
-crm_noah_online: kafka_consume.o main.o userquery.o string_tools.o ofo_crm.o noah_config.o queue.o city.o
+crm_noah_online: kafka_consume.o main.o userquery.o string_tools.o ofo_crm.o noah_config.o queue.o city.o parallel_load_config.o
 	${CC} $^ -o $@ ${CFLAG}
 
 main.o:
@@ -49,6 +49,10 @@ queue.o:
 
 city.o:
 	${CC} -c -o $@ ${SRC}/city.cc ${CFLAG}
+
+parallel_load_config.o:
+	${CC} -c -o $@ ${SRC}/parallel_load_config.cc ${CFLAG}
+
 
 clean:
 	rm -fr *.o

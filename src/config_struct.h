@@ -71,4 +71,16 @@ class TimeRange {
         int num;
 };
 
+//多线程加载文件类
+class ParallelLoadConfig {
+    public:
+        ParallelLoadConfig ():field_name(""), file_name("") {
+            time_range_origin.clear();
+        }
+        std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>> time_range_origin; 
+        std::string field_name;
+        std::string file_name;
+        pthread_mutex_t mutex;
+};
+
 #endif

@@ -2,6 +2,8 @@
 
 using namespace std;
 
+extern void * parallel_load_config(void*);
+
 UserQuery::UserQuery() {
     run_ = false;
     last_update_increment_date = "0";
@@ -501,15 +503,34 @@ bool UserQuery::Init() {
 }
 
 bool UserQuery::LoadInitialRangeData() {
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
+    pthread_t id[time_range_file.size()];
+    int i = -1;
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
-        unordered_map<long, vector<TimeRange>> base_vec;
-
-        if (!LoadRangeOriginConfig("./data/"+iter->second+".txt", &base_vec)) {
+        ++i;
+        ParallelLoadConfig* parallel_conf = new ParallelLoadConfig();
+        parallel_conf->field_name = iter->first;
+        parallel_conf->file_name = iter->second;
+        parallel_conf->time_range_origin = time_range_origin;
+        parallel_conf->mutex = mutex;
+        int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)parallel_conf);
+        if (ret != 0) {
+            LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
             return false;
         }
 
-        time_range_origin.insert(make_pair(iter->first, base_vec));
+        //unordered_map<long, vector<TimeRange>> base_vec;
+        //if (!LoadRangeOriginConfig("./data/"+iter->second+".txt", &base_vec)) {
+        //    return false;
+        //}
+        //time_range_origin.insert(make_pair(iter->first, base_vec));
+    }
+
+    void *thread_result;
+    for (size_t i = 0; i < time_range_file.size(); ++i) {
+        pthread_join(id[i], &thread_result);
     }
 
     return true;
