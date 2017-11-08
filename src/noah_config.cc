@@ -289,7 +289,7 @@ bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
             config.filter_id == "order.month_card_pay_order" ||
             config.filter_id == "order.coupon_pay_order" ||
             config.filter_id == "order.3free_order" ||
-            config.filter_id == "userprofile.month_card_overtime" ||
+            config.filter_id == "userprofile.month_card_overtime"
             ) {
         kafka_data->log_str += "<add illegal field:"+config.filter_id + ">";
         return false;

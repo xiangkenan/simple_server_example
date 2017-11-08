@@ -486,6 +486,7 @@ bool UserQuery::LoadInitialRangeData() {
 
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
+    cout << behaver_message << endl;
     Json::Reader reader;
     Json::Value user_json;
 
