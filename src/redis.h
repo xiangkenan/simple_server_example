@@ -26,7 +26,7 @@ class Redis {
     }
 
     bool Connect(const std::string& host, const int port, const std::string& passwd = "") {
-        struct timeval tv = {0, 50000};
+        struct timeval tv = {0, 100000};
         connect_ = redisConnectWithTimeout(host.c_str(), port, tv);
         if (connect_ != NULL && connect_->err) {
             LOG(ERROR) << "redis " << host << ":" << port << " connect error: " << connect_->errstr;
