@@ -578,17 +578,16 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             continue;
         }
 
+        string user_id_md5 = user_json["content"][i]["userid"].asString();
+        if (user_id_md5.size() != 32) {
+            continue;
+        }
+
         //连接解密userid redis
         Redis redis_userid;
         if (!redis_userid.Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
             LOG(WARNING) << "connect userid redis failed" ;
             return false;
-        }
-            
-
-        string user_id_md5 = user_json["content"][i]["userid"].asString();
-        if (user_id_md5.size() != 32) {
-            continue;
         }
 
         redis_userid.HGet("user_info_"+user_id_md5, "userid", &(kafka_data->uid));
