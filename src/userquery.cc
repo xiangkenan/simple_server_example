@@ -445,6 +445,8 @@ bool UserQuery::UpdateDayIncrement() {
     }
 
     LOG(WARNING) << "DEBUG: start update increment user data" << date;
+    string command_mkdir = "mkdir ./data/bak/" + get_now_date();
+    system(command_mkdir.c_str());
 
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
@@ -452,6 +454,9 @@ bool UserQuery::UpdateDayIncrement() {
         if (!LoadRangeOriginConfig("./data/"+iter->second + "_" + date +".txt", &time_range_origin[iter->first])) {
             continue;
         }
+
+        string command_mv = "mv ./data/"+iter->second + "_" + date +".txt " + " ./data/bak/" + get_now_date();
+        system(command_mv.c_str());
     }
     LOG(WARNING) << "DEBUG: update all increment user data" << date;
 
