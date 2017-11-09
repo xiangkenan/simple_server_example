@@ -616,8 +616,6 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
 
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
-        string json_1006 = kafka_data->offline_data_json["rv"]["1006"].asString();
-
         //沉默天数
         if (kafka_data->offline_data_json["rv"]["1006"] != "") {
             kafka_data->offline_data_json["rv"]["10003"]  =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
