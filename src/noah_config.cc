@@ -5,9 +5,7 @@ using namespace std;
 NoahConfigRead::NoahConfigRead(std::unordered_map<std::string, std::unordered_map<long, std::vector<TimeRange>>>* time_range_origin) {
     time_range_origin_ = time_range_origin;
 
-    redis_field_map["offline.silence"] = "1006";
     redis_field_map["userprofile.city"] = "11";
-    redis_field_map["order.month_card"] = "12";
     redis_field_map["userprofile.competitor"] = "2";
     redis_field_map["userprofile.oauth"] = "3";
     redis_field_map["userprofile.bond"] = "4";
@@ -18,14 +16,16 @@ NoahConfigRead::NoahConfigRead(std::unordered_map<std::string, std::unordered_ma
     redis_field_map["userprofile.auth_time"] = "8";
     redis_field_map["userprofile.first_order_time"] = "1008";
 
-    redis_field_map["order.order"] = "1001";
-    redis_field_map["order.repair_order"] = "1002";
-    redis_field_map["order.free_order"] = "1003";
-    redis_field_map["order.weekday_order"] = "1004";
-    redis_field_map["order.peak_order"] = "1005";
+    //redis_field_map["order.order"] = "1001";
+    //redis_field_map["order.repair_order"] = "1002";
+    //redis_field_map["order.free_order"] = "1003";
+    //redis_field_map["order.weekday_order"] = "1004";
+    //redis_field_map["order.peak_order"] = "1005";
 
     //自定义范围
-    redis_field_map["offline.register"] = "10000";
+    redis_field_map["offline.register"] = "10001";
+    redis_field_map["order.month_card"] = "10002";
+    redis_field_map["offline.silence"] = "10003";
 
     //字段处理类型
     type_map_operate["offline.register"] = 1;

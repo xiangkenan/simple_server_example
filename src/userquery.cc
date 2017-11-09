@@ -618,8 +618,9 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
 
         string json_1006 = kafka_data->offline_data_json["rv"]["1006"].asString();
 
+        //沉默天数
         if (kafka_data->offline_data_json["rv"]["1006"] != "") {
-            kafka_data->offline_data_json["rv"]["1006"]  =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
+            kafka_data->offline_data_json["rv"]["10003"]  =  distance_time_now(kafka_data->offline_data_json["rv"]["1006"].asString())/86400;
         }
 
         if (kafka_data->offline_data_json["rv"]["7"] != "") {
@@ -627,9 +628,10 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
             kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
             //注册天数 （10000）
-            kafka_data->offline_data_json["rv"]["10000"] = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
+            kafka_data->offline_data_json["rv"]["10001"] = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
         }
 
+        //注册城市
         if (kafka_data->offline_data_json["rv"]["11"] != "") {
             kafka_data->userprofile_city = city.city_map[kafka_data->offline_data_json["rv"]["11"].asString()];
         }
@@ -644,12 +646,14 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             kafka_data->offline_data_json["rv"]["1008"] =  distance_time_now(kafka_data->offline_data_json["rv"]["1008"].asString());
         }
 
+        //历史订单
         if (kafka_data->offline_data_json["rv"]["1001"] != "") {
             kafka_data->order_num =  kafka_data->offline_data_json["rv"]["1001"].asString();
         }
 
+        //月卡剩余时间
         if (kafka_data->offline_data_json["rv"]["12"] != "") {
-            kafka_data->offline_data_json["rv"]["12"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400 + 1;
+            kafka_data->offline_data_json["rv"]["10002"] =  ((-1)*distance_time_now(kafka_data->offline_data_json["rv"]["12"].asString() + " 00:00:00"))/86400 + 1;
         }
 
         return true;
