@@ -10,7 +10,9 @@ class QueueKafka {
         QueueKafka() {
             pthread_mutex_init(&mutex, NULL);  
         }
-        ~QueueKafka() {}
+        ~QueueKafka() {
+            pthread_mutex_destroy(&mutex);
+        }
         void get_queue(std::string& get_msg);
         void put_queue(const std::string& str_msg);
         inline bool empty() {

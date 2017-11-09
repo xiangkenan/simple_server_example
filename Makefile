@@ -19,7 +19,7 @@ LDFLAGS=  -L/usr/local/lib -lrdkafka \
 		  -L/usr/local/qconf/lib -lqconf
 
 
-CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis -lpthread
+CFLAG= ${INCLUDE} ${LDFLAGS} -Wall -std=c++11  -lrdkafka++ -lz -lpthread -lrt -lhiredis
 
 all: crm_noah_online clean
 

@@ -517,11 +517,11 @@ bool UserQuery::LoadInitialRangeData() {
         parallel_conf->file_name = iter->second;
         parallel_conf->time_range_origin = &time_range_origin;
         parallel_conf->mutex = mutex;
-        cout << "内部地址:" << parallel_conf->time_range_origin << endl;
         int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)parallel_conf);
         if (ret != 0) {
             LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
             return false;
+            pthread_mutex_destroy(&mutex);
         }
     }
 
@@ -529,6 +529,8 @@ bool UserQuery::LoadInitialRangeData() {
     for (size_t i = 0; i < time_range_file.size(); ++i) {
         pthread_join(id[i], &thread_result);
     }
+
+    pthread_mutex_destroy(&mutex);
 
     if (time_range_file.size() <= 0) {
         LOG(ERROR) << "parallel load conf failed!!";
