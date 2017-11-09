@@ -134,7 +134,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 //*************
                 //发送短信
-                //if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
+                //if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
                 //    kafka_data->log_str += "{send message error!!}";
                 //}
                 //*************
