@@ -10,7 +10,7 @@ NoahConfigRead::NoahConfigRead(std::unordered_map<std::string, std::unordered_ma
     redis_field_map["userprofile.oauth"] = "3";
     redis_field_map["userprofile.bond"] = "4";
     redis_field_map["userprofile.recharge"] = "5";
-    redis_field_map["userprofile.device"] = "6";
+    redis_field_map["userprofile.device"] = "13";
 
     redis_field_map["userprofile.reg_time"] = "7";
     redis_field_map["userprofile.auth_time"] = "8";
@@ -282,7 +282,7 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
     if (type_map_operate.find(config.filter_id) == type_map_operate.end()) {
-        kafka_data->log_str += "<add illegal field:"+config.filter_id + ">";
+        kafka_data->log_str += "<find illegal field:"+config.filter_id + ">";
         return false;
     }
     return data_core_operate(config, type_map_operate[config.filter_id], kafka_data);

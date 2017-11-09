@@ -2,8 +2,8 @@
 #include "ofo_crm.h"
 #include "queue.h"
 
-#define THREAD_COUNT 1
-#define RATIO 1
+#define THREAD_COUNT 40
+#define RATIO 5
 #define THREAD_QUEUE THREAD_COUNT*RATIO
 
 static void sigterm (int sig) {
