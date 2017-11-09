@@ -92,45 +92,37 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
             limit = atoi(lasso_config_map[kafka_data->action_id[i]].limit.c_str());
         }
 
-        string url = "http://192.168.9.17/riskmgt/antispam?param=freq&op=query&bid=10038&kv1=activity," + kafka_data->action_id[i];
-        if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
-            LOG(WARNING) << "riskmgt interface error";
-            continue;
-        }
-
-        Json::Value result;
-        result = get_url_json(buf);
-        int limit_num_cur = atoi(result["data"][0]["frequence"][0]["value"].asString().c_str());
-        if (limit < limit_num_cur && limit != 0) {
-            kafka_data->log_str += "(=>:hit freq activity:" + kafka_data->action_id[i] + " full <"+to_string(limit_num_cur)+">)";
-            continue;
-        } else {
-            string url = "http://192.168.9.17/riskmgt/antispam?param=freq&bid=10038&kv1=activity," + kafka_data->action_id[i];
-            if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
-                LOG(WARNING) << "riskmgt interface error";
-                continue;
-            }
-        }
-        //LOG(INFO) << write_ms_log(start_time, "cost:频控");
-
         //每个活动 每人只发送一次短信或push
-        url = "http://192.168.9.17/riskmgt/antispam?param=freq&bid=10038&kv1=user_id," + kafka_data->action_id[i] + "_" + kafka_data->uid;
-        if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, NULL, NULL)) != MURLE_OK) {
-            LOG(WARNING) << "riskmgt interface error";
-            continue;
-        }
-        result = get_url_json(buf);
-        string code = result["code"].asString();
-        if (code != "200") {
-            kafka_data->log_str += "(=>:hit freq userid full)";
+        string activity_userid;
+        if (!redis_user_trigger_config->HGet("activity_userid_num", kafka_data->action_id[i]+"_"+kafka_data->uid, &activity_userid)) {
+            LOG(ERROR) << "redis activity_userid_num get error!";
             return false;
         }
-
+        if (atoi(activity_userid.c_str()) != 0) {
+            kafka_data->log_str += "(=>:hit freq userid full)";
+            return false;
+        } else {
+            redis_user_trigger_config->HSet("activity_userid_num", kafka_data->action_id[i]+"_"+kafka_data->uid, "1");
+        }
         //LOG(INFO) << write_ms_log(start_time, "cost:用户频控");
-        //活动计数
-        redis_user_trigger_config->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
 
-        //开发短信和push
+        //活动限制
+        if (limit != 0) {
+            string activity_num;
+            if (!redis_user_trigger_config->HGet("crm_activity_num", kafka_data->action_id[i], &activity_num)) {
+                LOG(ERROR) << "redis crm_activity_num get error!";
+                return false;
+            }
+            if (atoi(activity_num.c_str()) >=  limit) {
+                kafka_data->log_str += "(=>:hit freq activity:" + kafka_data->action_id[i] + " full <"+activity_num+">)";
+                return false;
+            } else {
+                //活动计数
+                redis_user_trigger_config->HIncrby("crm_activity_num", kafka_data->action_id[i], 1);
+            }
+        }
+        
+        //发短信和push
         vector<TelPushMsg> tel_push_msg = lasso_config_map[kafka_data->action_id[i]].tel_push_msg;
         for (size_t j = 0; j < tel_push_msg.size(); ++j) {
             memset(buf, 0, sizeof(buf));
@@ -145,12 +137,12 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
                 //*************
                 //发送短信
-                if ((ret = murl_get_url(url.c_str(), buf, 10240, 100, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
+                if ((ret = murl_get_url(url.c_str(), buf, 10240, 50, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
                     kafka_data->log_str += "{send message error!!}";
                 }
                 //*************
                 //LOG(INFO) << write_ms_log(start_time, "cost:短信耗时");
-                kafka_data->log_str += "●●{send message to " + kafka_data->tel + ":" + 
+                kafka_data->log_str += "{send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + "}";
             }
             if (tel_push_msg[j].type == "push") {
@@ -174,7 +166,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 //发送push
                 redis_push.Lpush("push:"+to_string(id), push_json_str);
                 
-                kafka_data->log_str += "●●{send push to "+kafka_data->uid+":" + 
+                kafka_data->log_str += "{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
             }
         }
@@ -185,14 +177,14 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str += "date:" + kafka_data->user_behaviour_date + " action:"+kafka_data->action+" userid:" + kafka_data->uid + " tel:" + kafka_data->tel + " ";
+    kafka_data->log_str += "【date:" + kafka_data->user_behaviour_date + " action:"+kafka_data->action+" userid:" + kafka_data->uid + " tel:" + kafka_data->tel + "】";
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
             iter != lasso_config_map.end();
             iter++) {
         int flag_hit = 0;
-        kafka_data->log_str += "(●|●)activity:" + iter->first + "=>";
+        kafka_data->log_str += " ● activity:" + iter->first + "=>";
         for(unsigned int i = 0; i < iter->second.base_config.size(); ++i) {
             //测试
             char char_tail_uid = (kafka_data->uid)[kafka_data->uid.length()-1];
@@ -212,11 +204,11 @@ bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka
             if (cc.filter_id == "realtime.app.action") {
                 if ((cc.option_id == "app.action.appon" && kafka_data->action == "appscan") || 
                         (cc.option_id == "app.action.scan" && kafka_data->action == "appstart")) {
-                    kafka_data->log_str += "&touch failed";
+                    kafka_data->log_str += "&no app";
                     flag_hit = -1;
                     break;
                 } else {
-                    kafka_data->log_str += "&touch success";
+                    kafka_data->log_str += "&app";
                     continue;
                 }
             }
@@ -375,7 +367,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
 void UserQuery::Detect() {
     while(true) {
         run_ = false;
-        sleep(2);
+        sleep(5);
         InitConf("./conf/conf.txt");
         Redis redis_user_trigger_config;
         LOG(WARNING) << "start update config every min";
@@ -404,7 +396,7 @@ void UserQuery::Detect() {
             LOG(ERROR) << "dump file failed!";
         }
         
-        sleep(60);
+        sleep(120);
     }
 }
 
@@ -585,6 +577,10 @@ bool UserQuery::LoadInitialRangeData() {
 
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
+    if (lasso_config_map.size() == 0) {
+        return false;
+    }
+
     Json::Reader reader;
     Json::Value user_json;
 

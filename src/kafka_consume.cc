@@ -137,7 +137,7 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query, int i
             ofile << last_offset_;
             ofile.close();
 
-            sleep(1);
+            sleep(2);
         }
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);
 
