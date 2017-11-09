@@ -31,7 +31,7 @@ class UserQuery {
         bool InitConf(std::string conf_file);
         bool InitRedis(Redis* redis_user_trigger_config);
         bool HandleProcess(Redis* redis_user_trigger_config, KafkaData* kafka_data);
-        bool Parse_kafka_data(Redis* redis_user_trigger_config, std::string behaver_message, KafkaData* kafka_data);
+        bool Parse_kafka_data(std::string behaver_message, KafkaData* kafka_data);
         void parse_noah_config(const std::unordered_map<std::string, std::string>& all_json);
         bool LoadInitialRangeData();
         bool FreshTriggerConfig(Redis* redis_user_trigger_config);

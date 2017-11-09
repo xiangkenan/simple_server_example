@@ -46,21 +46,19 @@ bool UserQuery::InitRedis(Redis* redis_user_trigger_config) { Json::Reader reade
 bool UserQuery::Run(const string& behaver_message, string& log_str) {
     KafkaData kafka_data;
 
-    Redis redis_user_trigger_config;
     struct timeval start_time;
     gettimeofday(&start_time, NULL);
 
-
-    if(!InitRedis(&redis_user_trigger_config)) {
-        return false;
-    }
-
-    if(!Parse_kafka_data(&redis_user_trigger_config, behaver_message, &kafka_data)) {
+    if(!Parse_kafka_data(behaver_message, &kafka_data)) {
         log_str = kafka_data.log_str;
         return false;
     }
     //LOG(INFO) << write_ms_log(start_time, "cost:kafka成功");
-
+    
+    Redis redis_user_trigger_config;
+    if(!InitRedis(&redis_user_trigger_config)) {
+        return false;
+    }
 
     if (!HandleProcess(&redis_user_trigger_config, &kafka_data)) {
         log_str = kafka_data.log_str;
@@ -581,7 +579,7 @@ bool UserQuery::LoadInitialRangeData() {
 }
 
 //获取用户uid,action
-bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behaver_message, KafkaData* kafka_data) {
+bool UserQuery::Parse_kafka_data(string behaver_message, KafkaData* kafka_data) {
     if (lasso_config_map.size() == 0) {
         return false;
     }
@@ -628,9 +626,14 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             continue;
         }
 
+        Redis redis_user_trigger_config;
+        if (!GetQconfRedis(&redis_user_trigger_config, "/Dba/redis/prc/online/ofo_crm/connection")) {
+            return false;
+        }
+
         ////白名单过滤
         //string white_user;
-        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        //redis_user_trigger_config.HGet("crm_write_list", kafka_data->tel, &white_user);
         //if (white_user != "crm_write") {
         //    return false;
         //}
@@ -641,7 +644,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
 
         //获取用户离线数据
         string user_offline_data;
-        redis_user_trigger_config->Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
+        redis_user_trigger_config.Get("ofo:user_lib:"+kafka_data->uid, &user_offline_data);
 
         reader.parse(user_offline_data.c_str(), kafka_data->offline_data_json);
 
