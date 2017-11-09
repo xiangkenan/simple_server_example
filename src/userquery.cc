@@ -520,8 +520,8 @@ bool UserQuery::LoadInitialRangeData() {
         int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)parallel_conf);
         if (ret != 0) {
             LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
-            return false;
             pthread_mutex_destroy(&mutex);
+            return false;
         }
     }
 
