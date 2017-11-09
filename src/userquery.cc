@@ -168,7 +168,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
 //1:满足配置 2:不满足配置 -1:出错
 bool UserQuery::HandleProcess(Redis* redis_user_trigger_config, KafkaData *kafka_data) {
-    kafka_data->log_str += "date:" + kafka_data->user_behaviour_date + " action:"+kafka_data->action+" userid:" + kafka_data->uid + " ";
+    kafka_data->log_str += "date:" + kafka_data->user_behaviour_date + " action:"+kafka_data->action+" userid:" + kafka_data->uid + " tel:" + kafka_data->tel + " ";
     //初始化配置操作类
     NoahConfigRead noah_config_read(&time_range_origin);
     for (unordered_map<std::string, NoahConfig>::iterator iter = lasso_config_map.begin();
@@ -627,7 +627,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             //注册时间先不加一天
             kafka_data->offline_data_json["rv"]["7"] =  distance_time_now(kafka_data->offline_data_json["rv"]["7"].asString());
             kafka_data->register_day = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
-            //注册天数 （10000）
+            //注册天数 （10001）
             kafka_data->offline_data_json["rv"]["10001"] = to_string(atoi(kafka_data->offline_data_json["rv"]["7"].asString().c_str())/86400);
         }
 
