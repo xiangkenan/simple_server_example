@@ -242,7 +242,7 @@ bool NoahConfigRead::is_big_small(const BaseConfig& config, int user_msg) {
 */
 bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, KafkaData* kafka_data) {
     string user_msg;
-    if (flag != 4) {
+    if (flag != 4 || flag != 5) {
         if (!kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].isNull()) {
             user_msg = kafka_data->offline_data_json["rv"][redis_field_map[config.filter_id]].asString();
         }

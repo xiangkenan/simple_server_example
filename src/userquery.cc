@@ -623,13 +623,13 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
             continue;
         }
 
-        //白名单过滤
-        string white_user;
-        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        if (white_user != "crm_write") {
-            return false;
-        }
-        LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
+        ////白名单过滤
+        //string white_user;
+        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        //if (white_user != "crm_write") {
+        //    return false;
+        //}
+        //LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
 
         //测试
         //kafka_data->uid = "554345677";
