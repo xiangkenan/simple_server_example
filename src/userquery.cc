@@ -513,16 +513,17 @@ bool UserQuery::LoadInitialRangeData() {
     ofile.open("./conf/parallel_load_config.txt");
     ofile.close();
 
+    ParallelLoadConfig* parallel_conf[time_range_file.size()];
     int i = -1;
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
         ++i;
-        ParallelLoadConfig* parallel_conf = new ParallelLoadConfig();
-        parallel_conf->field_name = iter->first;
-        parallel_conf->file_name = iter->second;
-        parallel_conf->time_range_origin = &time_range_origin;
-        parallel_conf->mutex = mutex;
-        int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)parallel_conf);
+        parallel_conf[i] = new ParallelLoadConfig();
+        parallel_conf[i]->field_name = iter->first;
+        parallel_conf[i]->file_name = iter->second;
+        parallel_conf[i]->time_range_origin = &time_range_origin;
+        parallel_conf[i]->mutex = mutex;
+        int ret = pthread_create(&id[i], NULL, parallel_load_config, (void*)(parallel_conf[i]));
         if (ret != 0) {
             LOG(ERROR) << "parallel load conf failed, pthread create: " << strerror(errno);
             pthread_mutex_destroy(&mutex);
@@ -533,6 +534,11 @@ bool UserQuery::LoadInitialRangeData() {
     void *thread_result;
     for (size_t i = 0; i < time_range_file.size(); ++i) {
         pthread_join(id[i], &thread_result);
+    }
+
+    //清除空间
+    for (size_t i = 0; i < time_range_file.size(); ++i) {
+        delete (parallel_conf[i]);
     }
 
     pthread_mutex_destroy(&mutex);
