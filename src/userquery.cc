@@ -46,8 +46,8 @@ bool UserQuery::InitRedis(Redis* redis_user_trigger_config) { Json::Reader reade
 bool UserQuery::Run(const string& behaver_message, string& log_str) {
     KafkaData kafka_data;
 
-    struct timeval start_time;
-    gettimeofday(&start_time, NULL);
+    //struct timeval start_time;
+    //gettimeofday(&start_time, NULL);
 
     if(!Parse_kafka_data(behaver_message, &kafka_data)) {
         log_str = kafka_data.log_str;
