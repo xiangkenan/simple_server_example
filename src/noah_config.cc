@@ -281,18 +281,6 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
-    //if (config.filter_id == "realtime.order.action" ||
-    //        config.filter_id == "userprofile.recharge" ||
-    //        config.filter_id == "userprofile.device" ||
-    //        config.filter_id == "order.ramounts_pay_order" ||
-    //        config.filter_id == "order.month_card_pay_order" ||
-    //        config.filter_id == "order.coupon_pay_order" ||
-    //        config.filter_id == "order.3free_order" ||
-    //        config.filter_id == "userprofile.month_card_overtime"
-    //        ) {
-    //    kafka_data->log_str += "<add illegal field:"+config.filter_id + ">";
-    //    return false;
-    //}
     if (type_map_operate.find(config.filter_id) == type_map_operate.end()) {
         kafka_data->log_str += "<add illegal field:"+config.filter_id + ">";
         return false;
