@@ -131,14 +131,14 @@ bool NoahConfigRead::is_confirm(const BaseConfig& config, string user_msg) {
     else
         return false;
     if (config.option_id.find(not_contain) != string::npos) {
-        if (user_msg == "1")
-            return false;
+        if (user_msg == "0")
+            return true;
     } else {
-        if(user_msg == "0")
-            return false;
+        if(user_msg == "1")
+            return true;
     }
 
-    return true;
+    return false;
 }
 
 bool NoahConfigRead::is_time_range(const BaseConfig& config, string user_msg) {
