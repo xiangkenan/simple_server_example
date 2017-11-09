@@ -132,30 +132,35 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 string url = "192.168.2.123/now";
                 string args = "to=" + kafka_data->tel + "&templateId=crm_notify&context="+tel_push_msg[j].content;
                 string token = "x-ofo-token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODYzNjY0Nzk2MiIsIm5hbWUiOiLmt7HlnLMifQ.EjXJEjEWGKcsI896Mx6BUCbtnlq_gcnQ2NjpQaZSLkE";
-                ////*************
+                //*************
+                //发送短信
                 //if ((ret = murl_get_url(url.c_str(), buf, 10240, 0, NULL, token.c_str(), args.c_str())) != MURLE_OK) {
                 //    kafka_data->log_str += "{send message error!!}";
                 //}
-                ////*************
+                //*************
                 kafka_data->log_str += "●●{send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + "}";
             }
             if (tel_push_msg[j].type == "push") {
 
                 //连接push redis
-                //Redis redis_push;
-                //if (!GetQconfRedis(&redis_push, "/Dba/redis/prc/online/ofo_push/connection")) {
-                //    return false;
-                //}
+                Redis redis_push;
+                if (!GetQconfRedis(&redis_push, "/Dba/redis/prc/online/ofo_push/connection")) {
+                    return false;
+                }
 
-                //int id = (atoi(kafka_data->uid.c_str()))%1+1;
-                //Json::Value push_json;
-                //Json::FastWriter writer;
-                //push_json["cid"] = kafka_data->uid+ kafka_data->tel;
-                //push_json["content"] = tel_push_msg[j].content;
-                //push_json["jump_url"] = tel_push_msg[j].jump_url;
-                //string push_json_str = writer.write(push_json);
-                //redis_push->Lpush("push:"+to_string(id), push_json_str);
+                time_t timep;
+                time(&timep);
+                int id = (atoi(kafka_data->uid.c_str()))%1+1;
+                Json::Value push_json;
+                Json::FastWriter writer;
+                push_json["cid"] = kafka_data->uid+ kafka_data->tel;
+                push_json["content"] = tel_push_msg[j].content;
+                push_json["jump_url"] = tel_push_msg[j].jump_url;
+                push_json["date"] = to_string(timep);
+                string push_json_str = writer.write(push_json);
+                //发送push
+                //redis_push.Lpush("push:"+to_string(id), push_json_str);
                 
                 kafka_data->log_str += "●●{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
@@ -587,7 +592,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config, string behave
 
         //连接解密userid redis
         Redis redis_userid;
-        if (!redis_userid.Connect("192.168.9.242", 3000, "MKL7cOEehQf8aoIBtHxs")) {
+        if (!GetQconfRedis(&redis_userid, "/Dba/redis/prc/online/ofo_userbase/connection")) {
             LOG(WARNING) << "connect userid redis failed" ;
             return false;
         }
