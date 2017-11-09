@@ -157,7 +157,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 push_json["cid"] = kafka_data->uid+ kafka_data->tel;
                 push_json["content"] = tel_push_msg[j].content;
                 push_json["jump_url"] = tel_push_msg[j].jump_url;
-                push_json["date"] = to_string(timep);
+                push_json["time"] = to_string(timep);
                 string push_json_str = writer.write(push_json);
                 //发送push
                 //redis_push.Lpush("push:"+to_string(id), push_json_str);
