@@ -151,7 +151,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
 
                 time_t timep;
                 time(&timep);
-                int id = (atoi(kafka_data->uid.c_str()))%1+1;
+                //int id = (atoi(kafka_data->uid.c_str()))%280+1;
                 Json::Value push_json;
                 Json::FastWriter writer;
                 push_json["cid"] = kafka_data->uid+ kafka_data->tel;
@@ -409,7 +409,7 @@ bool UserQuery::DumpDayFile() {
 
         dump_file_every_date = date;
     }
-    LOG(WARNING) << "start dump file :" << date;
+    LOG(WARNING) << "DEBUG: start dump file :" << date;
 
     string dump_path = "mv  ./data/dump/" + date + " ./data/dump/" + date + "." + get_now_hour_min_sec();
     system(dump_path.c_str());
@@ -422,7 +422,7 @@ bool UserQuery::DumpDayFile() {
             continue;
         }
     }
-    LOG(WARNING) << "dump all file success" << date;
+    LOG(WARNING) << "DEBUG: dump all file success" << date;
 
     return true;
 }
@@ -440,7 +440,7 @@ bool UserQuery::UpdateDayIncrement() {
         last_update_increment_date = date;
     }
 
-    LOG(WARNING) << "start update increment user data" << date;
+    LOG(WARNING) << "DEBUG: start update increment user data" << date;
 
     for (unordered_map<string, string>::iterator iter = time_range_file.begin();
             iter != time_range_file.end(); iter++) {
@@ -449,7 +449,7 @@ bool UserQuery::UpdateDayIncrement() {
             continue;
         }
     }
-    LOG(WARNING) << "update all increment user data" << date;
+    LOG(WARNING) << "DEBUG: update all increment user data" << date;
 
     return true;
 }
