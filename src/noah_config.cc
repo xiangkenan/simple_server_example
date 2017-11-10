@@ -217,6 +217,12 @@ bool NoahConfigRead::write_log(const BaseConfig& config, bool flag, KafkaData* k
 
 //判断大小
 bool NoahConfigRead::is_big_small(const BaseConfig& config, int user_msg) {
+    if (config.filter_id == "order.month_card") {
+        if (user_msg < atoi(config.values[0].c_str()) || user_msg > atoi(config.values[1].c_str()))
+            return false;
+        return true;
+    }
+
     if (config.value_id.find("GREATER") != string::npos) {
         if (user_msg <= atoi(config.values[0].c_str()))
             return false;
@@ -224,7 +230,7 @@ bool NoahConfigRead::is_big_small(const BaseConfig& config, int user_msg) {
         if (user_msg >= atoi(config.values[0].c_str()))
             return false;
     } else if (config.value_id.find("BETWEEN") != string::npos) {
-        if (user_msg < atoi(config.values[0].c_str()) || user_msg > atoi(config.values[1].c_str()) )
+        if (user_msg < atoi(config.values[0].c_str()) || user_msg > atoi(config.values[1].c_str()))
             return false;
     } else {
         return false;
