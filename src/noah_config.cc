@@ -280,10 +280,8 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             return write_log(config, ret, kafka_data, atoi(user_msg.c_str()));
         default:
             kafka_data->log_str += "&未知字段:" + config.filter_id;
-            return true;
+            return false;
     }
-
-    return true;
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
