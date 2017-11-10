@@ -5,7 +5,7 @@ using namespace std;
 
 bool OfoCrm::Run(int i, QueueKafka* queue_kafka, long offset) {
     try {
-        std::shared_ptr<kafka_consumer_client> kafka_consumer_client_ = std::make_shared<kafka_consumer_client>("192.168.30.236:9092", "userevents", "crm_noah", offset, i);
+        std::shared_ptr<kafka_consumer_client> kafka_consumer_client_ = std::make_shared<kafka_consumer_client>("192.168.30.236:9092", "userevents", "crm_noah_kenan", offset, i);
         //std::shared_ptr<kafka_consumer_client> kafka_consumer_client_ = std::make_shared<kafka_consumer_client>("10.6.26.147:9092", "crm-test", "crm_noah", offset, i);
         if (!kafka_consumer_client_->initClient(queue_kafka)){
             fprintf(stderr, "kafka server initialize error\n");

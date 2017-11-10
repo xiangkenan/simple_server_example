@@ -51,9 +51,9 @@ int main(int argc, char **argv) {
         if (!fin) {
             ofstream ofile;
             ofile.open("conf/offset/offset_"+to_string(i)+".txt");
-            ofile << 0;
+            ofile << "-1";
             ofile.close();
-            offset.push_back(0);
+            offset.push_back(-1);
             continue;
         }
         string line;
@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
         }
         fin.close();
     }
+
     if (offset.size() != THREAD_COUNT) {
         cout << "load offset num is error!";
         return 0;
