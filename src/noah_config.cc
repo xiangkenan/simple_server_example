@@ -282,6 +282,8 @@ bool NoahConfigRead::data_core_operate(const BaseConfig& config, int flag, Kafka
             kafka_data->log_str += "&未知字段:" + config.filter_id;
             return false;
     }
+
+    return false;
 }
 
 bool NoahConfigRead::Run(const BaseConfig& config, KafkaData* kafka_data) {
