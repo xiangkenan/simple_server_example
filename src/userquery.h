@@ -12,6 +12,7 @@
 #include <fstream>
 #include <unordered_map>
 
+#include "redpacket.h"
 #include "redis.h"
 #include "string_tools.h"
 #include "noah_config.h"
@@ -69,6 +70,9 @@ class UserQuery {
         //是否强行dump 和 update开关
         std::string switch_update;
         std::string switch_dump;
+        
+        //发红包grpc
+        Redpacket *redpacket;
 };
 
 #endif

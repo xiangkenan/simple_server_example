@@ -5,6 +5,8 @@ using namespace std;
 extern void * parallel_load_config(void*);
 
 UserQuery::UserQuery() {
+    redpacket = new Redpacket(grpc::CreateChannel(
+        "10.6.0.180:2500", grpc::InsecureChannelCredentials()));
     run_ = false;
     last_update_increment_date = "0";
     dump_file_every_date = "0";
@@ -138,8 +140,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 //LOG(INFO) << write_ms_log(start_time, "cost:短信耗时");
                 kafka_data->log_str += "{send message to " + kafka_data->tel + ":" + 
                     tel_push_msg[j].content + "}";
-            }
-            if (tel_push_msg[j].type == "push") {
+            } else if (tel_push_msg[j].type == "push") {
                 //连接push redis
                 Redis redis_push;
                 if (!GetQconfRedis(&redis_push, "/Dba/redis/prc/online/ofo_push/connection")) {
@@ -162,6 +163,10 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 
                 kafka_data->log_str += "{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
+            } else if (tel_push_msg[j].type == "redpacket") {
+                continue;
+            } else {
+                continue;
             }
         }
     }
@@ -260,12 +265,21 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
         if(hour_min_sec > msg_push_config[i]["end"].asString() || hour_min_sec < msg_push_config[i]["start"].asString()) {
             continue;
         }
+
         TelPushMsg tel_push_msg;
-        tel_push_msg.content = msg_push_config[i]["content"].asString();
         tel_push_msg.type = msg_push_config[i]["type"].asString();
         if (tel_push_msg.type == "push") {
+            tel_push_msg.content = msg_push_config[i]["content"].asString();
+        } else if (tel_push_msg.type == "push") {
+            tel_push_msg.content = msg_push_config[i]["content"].asString();
             tel_push_msg.jump_url = msg_push_config[i]["jumpUrl"].asString();
+        } else if (tel_push_msg.type == "redpacket") {
+            tel_push_msg.content = msg_push_config[i]["content"].asString();
+            tel_push_msg.money = msg_push_config[i]["money"].asString();
+        } else {
+            continue;
         }
+
         noah_config->tel_push_msg.push_back(tel_push_msg);
     }
 
@@ -626,13 +640,13 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             return false;
         }
 
-        ////白名单过滤
-        //string white_user;
-        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        //if (white_user != "crm_write") {
-        //    return false;
-        //}
-        //LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
+        //白名单过滤
+        string white_user;
+        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        if (white_user != "crm_write") {
+            return false;
+        }
+        LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
 
         //测试
         //kafka_data->uid = "81002550";

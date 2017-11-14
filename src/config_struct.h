@@ -9,6 +9,7 @@ class TelPushMsg {
         std::string content;
         std::string jump_url;
         std::string type;
+        std::string money;
 };
 
 //noah 圈选用户配置
