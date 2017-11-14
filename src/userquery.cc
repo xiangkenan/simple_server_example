@@ -164,6 +164,14 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 kafka_data->log_str += "{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
             } else if (tel_push_msg[j].type == "redpacket") {
+                unordered_map<string, string> request_args;
+                request_args["source"] = "5";
+                request_args["action"] = "1";
+                request_args["user_id"] = kafka_data->uid;
+                request_args["money"] = tel_push_msg[j].money;
+                request_args["desc"] = tel_push_msg[j].content;
+                addRedpacketResponse response;
+                redpacket->send_redpacket(request_args, &response);
                 continue;
             } else {
                 continue;
