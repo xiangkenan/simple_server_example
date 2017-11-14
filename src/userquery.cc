@@ -164,15 +164,39 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 kafka_data->log_str += "{send push to "+kafka_data->uid+":" + 
                     tel_push_msg[j].content + "jump_url:" + tel_push_msg[j].jump_url+ "}";
             } else if (tel_push_msg[j].type == "redpacket") {
+                string money = tel_push_msg[j].money;
+                //随机金额
+                if(money.find("-") != string::npos) {
+                    vector<string> tt;
+                    Split(money, "-", &tt);
+                    if (tt.size() != 2 || !IsNumber(tt[0]) || !IsNumber(tt[1])) {
+                        kafka_data->log_str += "{send redpacket failed, input error!}";
+                        continue;
+                    }
+                    srand((unsigned)time(NULL));
+                    money = to_string(rand()%atoi(tt[1].c_str())+1);
+                    if (money < to_string(atoi(tt[0].c_str()))) {
+                        money = to_string(atoi(tt[0].c_str()));
+                    }
+                }
                 unordered_map<string, string> request_args;
                 request_args["source"] = "5";
                 request_args["action"] = "1";
                 request_args["user_id"] = kafka_data->uid;
-                request_args["money"] = tel_push_msg[j].money;
+                request_args["money"] = money;
                 request_args["desc"] = tel_push_msg[j].content;
                 addRedpacketResponse response;
-                redpacket->send_redpacket(request_args, &response);
-                continue;
+                bool ret = redpacket->send_redpacket(request_args, &response);
+                if (!ret) {
+                    delete redpacket;
+                    redpacket = new Redpacket(grpc::CreateChannel(
+                        "10.6.0.180:2500", grpc::InsecureChannelCredentials()));
+
+                    Redpacket redpacket(grpc::CreateChannel("10.6.0.179:2500", grpc::InsecureChannelCredentials()));
+                    redpacket.send_redpacket(request_args, &response);
+                }
+                kafka_data->log_str += "{send redpacket to "+kafka_data->uid+":" + 
+                    tel_push_msg[j].content + "}";
             } else {
                 continue;
             }
@@ -276,7 +300,7 @@ bool UserQuery::pretreatment(Json::Value all_config, NoahConfig* noah_config) {
 
         TelPushMsg tel_push_msg;
         tel_push_msg.type = msg_push_config[i]["type"].asString();
-        if (tel_push_msg.type == "push") {
+        if (tel_push_msg.type == "message") {
             tel_push_msg.content = msg_push_config[i]["content"].asString();
         } else if (tel_push_msg.type == "push") {
             tel_push_msg.content = msg_push_config[i]["content"].asString();
