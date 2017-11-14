@@ -37,6 +37,7 @@ long get_ms(const struct timeval* ts, const struct timeval* te);
 std::string write_ms_log (struct timeval start_time, const std::string& log_flag);
 inline unsigned long mktime_m (unsigned int year, unsigned int mon,unsigned int day, unsigned int hour,unsigned int min, unsigned int sec);
 time_t mktime_get(struct tm *time_now);
+bool IsNumber(const std::string& str);
 
 
 #endif

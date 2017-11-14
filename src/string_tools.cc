@@ -359,3 +359,11 @@ inline unsigned long mktime_m (unsigned int year, unsigned int mon,
            )*60 + sec; /* finally seconds */
 }
 
+bool IsNumber(const std::string& str) {
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (str[i] < '0' || str[i] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
