@@ -1,4 +1,4 @@
 update_increment_hour_time=01
 dump_time_hour=01
-switch_dump=yes
+switch_dump=no
 switch_update=no
