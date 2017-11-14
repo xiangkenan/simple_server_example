@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package ofo.redpacket.v1;
+
+option go_package = "redpacket";
+
+message addRedpacketRequest {
+    int64 user_id = 1;     // ofo_user_id
+    int32 source = 2;      // 来源
+    int32 action = 3;      // 操作
+    int32 money = 4;       // 红包金额(单位 分)
+    string request_id = 5; // 请求ID
+    string desc = 6;       // 奖品描述
+    string extra_data = 7; // 冗余信息
+}
+
+message addRedpacketResponse {
+    int32 code = 1;      // 错误码 0:成功
+    string msg = 2;      // 错误码描述
+    int64 packet_id = 3; // 红包记录ID
+    bool is_repeat = 4;  // 是否重复调用
+}
+
+message queryUserRedpacketRequest {
+    int64 user_id = 1;
+    int32 start = 2;
+    int32 limit = 3;
+}
+
+message packetInfo {
+    int64 user_id = 1;     // ofo_user_id
+    int32 source = 2;      // 来源
+    int32 action = 3;      // 操作
+    int32 money = 4;       // 红包金额(单位 分)
+    string request_id = 5; // 请求ID
+    string desc = 6;       // 奖品描述
+    string extra_data = 7; // 冗余信息
+    int64 packect_id = 8;
+    int64 create_time = 9;
+    int64 update_time = 10;
+    int32 status = 11;
+}
+
+message queryUserRedpacketResponse {
+    int32 code = 1;
+    string msg = 2;
+    repeated packetInfo records = 3;
+    bool have_more = 4;
+}
+
+message queryUserRedpacketIncomeRequest {
+    int64 user_id = 1;
+    int32 source = 2;
+}
+
+message queryUserRedpacketIncomeResponse {
+    int32 code = 1;
+    string msg = 2;
+    int32 money = 3;
+}
+
+service redpacketService {
+    // 查询某来源总额
+    rpc queryUserRedpacketIncome(queryUserRedpacketIncomeRequest) returns (queryUserRedpacketIncomeResponse);
+    // 添加红包
+    rpc addRedpacket(addRedpacketRequest) returns (addRedpacketResponse);
+    // 查询用户红包
+    rpc queryUserRedpacket(queryUserRedpacketRequest) returns (queryUserRedpacketResponse);
+    // 计算用户红包值
+    // rpc caculateUserReward(caculateUserRewardRequest) returns(caculateUserRewardResponse);
+}
