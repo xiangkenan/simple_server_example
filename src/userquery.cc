@@ -174,10 +174,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                         continue;
                     }
                     srand((unsigned)time(NULL));
-                    money = to_string(rand()%atoi(tt[1].c_str())+1);
-                    if (money < to_string(atoi(tt[0].c_str()))) {
-                        money = to_string(atoi(tt[0].c_str()));
-                    }
+                    money = to_string(rand()%(atoi(tt[1].c_str()) - atoi(tt[0].c_str()))+1+atoi(tt[0].c_str()));
                 }
                 unordered_map<string, string> request_args;
                 request_args["source"] = "5";
