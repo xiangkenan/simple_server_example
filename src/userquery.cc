@@ -169,12 +169,20 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 if(money.find("-") != string::npos) {
                     vector<string> tt;
                     Split(money, "-", &tt);
-                    if (tt.size() != 2 || !IsNumber(tt[0]) || !IsNumber(tt[1])) {
+                    if (tt.size() != 2 || !IsNumber(tt[0]) || !IsNumber(tt[1]) || atoi(tt[1].c_str()) < atoi(tt[0].c_str())) {
                         kafka_data->log_str += "{send redpacket failed, input error!}";
                         continue;
                     }
-                    srand((unsigned)time(NULL));
-                    money = to_string(rand()%(atoi(tt[1].c_str()) - atoi(tt[0].c_str()))+1+atoi(tt[0].c_str()));
+                    if (tt[0] == tt[1]) {
+                        money = tt[0];
+                    } else {
+                        srand((unsigned)time(NULL));
+                        money = to_string(rand()%(atoi(tt[1].c_str()) - atoi(tt[0].c_str()))+1+atoi(tt[0].c_str()));
+                    }
+                }
+                if (atoi(money.c_str()) > 10000 ) {
+                    kafka_data->log_str += "{send money too more!!}";
+                    continue;
                 }
                 unordered_map<string, string> request_args;
                 request_args["source"] = "5";
@@ -182,6 +190,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                 request_args["user_id"] = kafka_data->uid;
                 request_args["money"] = money;
                 request_args["desc"] = tel_push_msg[j].content;
+                request_args["request_id"] = kafka_data->action_id[i] + "_" + kafka_data->uid;
                 addRedpacketResponse response;
                 bool ret = redpacket->send_redpacket(request_args, &response);
                 if (!ret) {
@@ -193,7 +202,7 @@ bool UserQuery::SendMessage(KafkaData* kafka_data, Redis* redis_user_trigger_con
                     redpacket.send_redpacket(request_args, &response);
                 }
                 kafka_data->log_str += "{send redpacket to "+kafka_data->uid+":" + 
-                    tel_push_msg[j].content + "}";
+                    tel_push_msg[j].content + " money:" + money + "}";
             } else {
                 continue;
             }
@@ -670,12 +679,12 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
         }
 
         //白名单过滤
-        string white_user;
-        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        if (white_user != "crm_write") {
-            return false;
-        }
-        LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
+        //string white_user;
+        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        //if (white_user != "crm_write") {
+        //    return false;
+        //}
+        //LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
 
         //测试
         //kafka_data->uid = "81002550";
