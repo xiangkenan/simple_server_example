@@ -1,0 +1,10 @@
+prefix=/root/xiangkenan/noah_group/lib/librdkafka
+libdir=/root/xiangkenan/noah_group/lib/librdkafka/lib
+includedir=/root/xiangkenan/noah_group/lib/librdkafka/include
+
+Name: librdkafka
+Description: The Apache Kafka C/C++ library
+Version: 0.11.0
+Cflags: -I${includedir}
+Libs: -L${libdir} -lrdkafka
+Libs.private: -lpthread -lz -lcrypto -lssl -lcrypto -lrt -ldl
