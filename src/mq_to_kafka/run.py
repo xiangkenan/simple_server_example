@@ -14,9 +14,11 @@ if choose == "sorder":
     conf_dict['exchange_type'] = "direct"
     conf_dict['queue_durable'] = ""
     
-    conf_dict['ka_ip'] = "192.168.30.236"
+    #conf_dict['ka_ip'] = "192.168.30.236"
+    conf_dict['ka_ip'] = "10.211.55.12"
     conf_dict['ka_port'] = 9092
-    conf_dict['topic'] = "crm_order_action"
+    #conf_dict['topic'] = "crm_order_action"
+    conf_dict['topic'] = "crm_test_kenan"
     conf_dict['order_action'] = "sorder"
 
 elif choose == "eorder":

@@ -284,19 +284,23 @@ class RabbitMQConsumer(object):
         #self.logger.info('Received message # %s from %s: %s',
          #                basic_deliver.delivery_tag, properties.app_id, body)
         #body = "{\"body\":{\"errorCode\":200,\"createtime\":\"2017-11-17T06:06:46.000Z\",\"endtime\":\"2017-11-17T06:18:48.000Z\",\"startlat\":25.0449475795,\"startlng\":102.6532455438,\"endlat\":\"24.9741553\",\"endlng\":\"102.670045\",\"schoolid\":-35001,\"cityindex\":35001,\"oauth\":5,\"car_no\":\"36770834\",\"userid\":20800999,\"orderid\":473921393,\"lock_type\":5,\"source\":2,\"s\":8023,\"price\":1,\"status\":50},\"headers\":{\"header_ensure\":true,\"header_id\":\"9acf7867-8ac4-4ae4-9d47-bb1783c105e8\"}}"
-        uid = self.parse_body(body)
-        if self.order == "sorder":
-            self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"sorder\",\"userid\":"+str(uid)+"}]}}]")
-        elif self.order == "eorder":
-            self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"eorder\",\"userid\":"+str(uid)+"}]}}]")
-        else:
-            return
         try:
             self.process_body(body)
             self.acknowledge_message(basic_deliver.delivery_tag)
         except Exception as e:
             self.logger.warning('prcess body and acknowledge_message failed %s', e)
             self.logger.debug(traceback.format_exc())
+
+        uid = self.parse_body(body)
+        if self.order == "sorder" and uid != -1:
+            print ("sroder:")
+            self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"sorder\",\"userid\":"+str(uid)+"}]}}]")
+        elif self.order == "eorder" and uid != -1:
+            print ("eroder:")
+            self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"eorder\",\"userid\":"+str(uid)+"}]}}]")
+        else:
+            print ("no oder:")
+            return
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
@@ -371,6 +375,7 @@ class RabbitMQConsumer(object):
         self._connection.close()
 
     def parse_body(self, body):
-        s = json.loads(body)
+        s = json.loads(body,encoding="utf8")
+        if s.get("body").get("userid") == None:
+            return -1
         return s["body"]["userid"]
-
