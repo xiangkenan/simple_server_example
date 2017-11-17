@@ -36,6 +36,9 @@ elif choose == "eorder":
 else:
     sys.exit(0)
 
+#conf_dict['ka_ip'] = "10.211.55.12"
+#conf_dict['topic'] = "crm_test_kenan"
+
 logging.basicConfig(level=logging.INFO,
         format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',

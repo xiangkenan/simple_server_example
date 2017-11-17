@@ -24,6 +24,7 @@ class Kafka_producer():
             parmas_message = json.dumps(params)
             producer = self.producer
             producer.send(self.kafkatopic, parmas_message.encode('utf-8'))
+            #producer.send(self.kafkatopic, parmas_message.decode('utf-8'))
             producer.flush()
         except KafkaError as e:
             print e
@@ -61,8 +62,11 @@ class Kafka_consumer():
 #    测试consumer和producer
 #    :return:
 #    '''
-#    producer = Kafka_producer('127.0.0.1', 9092, "crm_test_kenan")
-#    producer.sendjsondata("nihaoaaaa")
+#    #producer = Kafka_producer('127.0.0.1', 9092, "crm_test_kenan_kenan")
+#    #producer.sendjsondata("INFO 2017-11-18 00:52:17 req[{\"body\":{\"content\":[{\"action\":\"eorder\",\"userid\":151286054}]}}]")
+#    producer = Kafka_producer('192.168.30.236', 9092, "crm_order_action")
+#    producer.sendjsondata("INFO 2017-11-18 00:52:17 req[{\"body\":{\"content\":[{\"action\":\"eorder\",\"userid\":151286054}]}}]")
+#    #print("asd")
 #
 #
 #    #consumer = Kafka_consumer('192.168.30.236', 9092, "userevents", 'crm_noah_kenan_test')
@@ -72,4 +76,4 @@ class Kafka_consumer():
 #
 #
 #if __name__ == '__main__':
-#    main()
+#main()
