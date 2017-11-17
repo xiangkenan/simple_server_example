@@ -293,13 +293,10 @@ class RabbitMQConsumer(object):
 
         uid = self.parse_body(body)
         if self.order == "sorder" and uid != -1:
-            print ("sroder:")
             self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"sorder\",\"userid\":"+str(uid)+"}]}}]")
         elif self.order == "eorder" and uid != -1:
-            print ("eroder:")
             self.producer.sendjsondata("INFO "+ time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + " req[{\"body\":{\"content\":[{\"action\":\"eorder\",\"userid\":"+str(uid)+"}]}}]")
         else:
-            print ("no oder:")
             return
 
     def acknowledge_message(self, delivery_tag):
