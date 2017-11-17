@@ -56,17 +56,20 @@ class Kafka_consumer():
             print e
 
 
-def main():
-    '''
-    测试consumer和producer
-    :return:
-    '''
-
-    consumer = Kafka_consumer('192.168.30.236', 9092, "userevents", 'crm_noah_kenan_test')
-    message = consumer.consume_data()
-    for i in message:
-        print i.value
-
-
-if __name__ == '__main__':
-    main()
+#def main():
+#    '''
+#    测试consumer和producer
+#    :return:
+#    '''
+#    producer = Kafka_producer('127.0.0.1', 9092, "crm_test_kenan")
+#    producer.sendjsondata("nihaoaaaa")
+#
+#
+#    #consumer = Kafka_consumer('192.168.30.236', 9092, "userevents", 'crm_noah_kenan_test')
+#    #message = consumer.consume_data()
+#    #for i in message:
+#    #    print i.value
+#
+#
+#if __name__ == '__main__':
+#    main()
