@@ -675,12 +675,6 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             continue;
         }
 
-        if (kafka_data->action == "appstart" || kafka_data->action == "appscan") {
-            user_id_md5 = "user_info_" + user_id_md5;
-        } else {
-            user_id_md5 = "info_user_" + user_id_md5;
-        }
-
         //连接解密userid redis
         Redis redis_userid;
         if (!GetQconfRedis(&redis_userid, "/Dba/redis/prc/online/ofo_userbase/connection")) {
@@ -688,10 +682,18 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             return false;
         }
 
-        redis_userid.HGet(user_id_md5, "userid", &(kafka_data->uid));
-        if(kafka_data->uid.empty()) {
-            continue;
+        if (kafka_data->action == "appstart" || kafka_data->action == "appscan") {
+            user_id_md5 = "user_info_" + user_id_md5;
+
+            redis_userid.HGet(user_id_md5, "userid", &(kafka_data->uid));
+            if(kafka_data->uid.empty()) {
+                continue;
+            }
+        } else {
+            kafka_data->uid = user_id_md5;
+            user_id_md5 = "info_user_" + user_id_md5;
         }
+
 
         redis_userid.HGet(user_id_md5, "telephone", &(kafka_data->tel));
         if(kafka_data->tel.empty()) {
