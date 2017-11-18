@@ -249,6 +249,18 @@ bool UserQuery::HandleProcess(KafkaData *kafka_data) {
                     continue;
                 }
             }
+            //判断订单行为触发是否满足
+            if (cc.filter_id == "realtime.order.action") {
+                if ((cc.option_id == "order.action.start" && kafka_data->action == "eorder") || 
+                        (cc.option_id == "order.action.end" && kafka_data->action == "sorder")) {
+                    kafka_data->log_str += "&no order_action";
+                    flag_hit = -1;
+                    break;
+                } else {
+                    kafka_data->log_str += "&order_action";
+                    continue;
+                }
+            }
 
             if (!noah_config_read.Run(iter->second.base_config[i], kafka_data)) {
                 flag_hit = -1;
@@ -671,7 +683,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
         }
 
         string user_id_md5 = user_json["content"][i]["userid"].asString();
-        if (user_id_md5.size() != 32) {
+        if ((kafka_data->action == "appstart" || kafka_data->action == "appscan") && user_id_md5.size() != 32) {
             continue;
         }
 
