@@ -662,6 +662,10 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             kafka_data->action = "appstart";
         } else if (user_json["content"][i]["action"].asString() == "HomepageClick_ofo_00010" && user_json["content"][i]["params"]["more"]["click"].asString() == "StartButton") {
             kafka_data->action = "appscan";
+        } else if ("content"[i]["action"].asString() == "sorder") {
+            kafka_data->action = "sorder";
+        } else if ("content"[i]["action"].asString() == "eorder") {
+            kafka_data->action = "eorder";
         } else {
             continue;
         }
@@ -703,6 +707,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
         //测试
         //kafka_data->uid = "81002550";
         //kafka_data->tel = "18211097924";
+        cout << kafka_data->uid << ":" << kafka_data->tel << endl;
 
         //获取用户离线数据
         string user_offline_data;
