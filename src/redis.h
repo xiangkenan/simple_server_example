@@ -31,6 +31,10 @@ class Redis {
         for (int retry = 0; retry < 3; ++retry) {
             connect_ = redisConnectWithTimeout(host.c_str(), port, tv);
             if (connect_ == NULL || connect_->err) {
+                if (connect_ != NULL) {
+                    redisFree(connect_);
+                    connect_ = NULL;
+                }
                 continue;
             }
 
@@ -45,7 +49,8 @@ class Redis {
             }
             return true;
         }
-        LOG(ERROR) << "redis " << host << ":" << port << " connect error: " << connect_->errstr;
+        std::string errmsg = (connect_ != NULL) ? connect_->errstr : "NULL";
+        LOG(ERROR) << "redis " << host << ":" << port << " connect error: " << errmsg;
         return false;
 
     }
@@ -129,7 +134,6 @@ class Redis {
         freeReplyObject(reply_);
         if (error) {
             LOG(ERROR) << "Failed to lpush " << key << " " << value;
-            std::cout << "lpush failed" << std::endl;
             return false;
         }
         return true;
@@ -137,7 +141,6 @@ class Redis {
 
     bool HSet(const std::string &id, const std::string& key, const std::string& value) {
         reply_ = (redisReply*) redisCommand(connect_, "HSET %s %s %s", id.c_str(), key.c_str(), value.c_str());
-        //std::cout << "Hset: " << id << "\t"<< key.c_str() << "\t"<< value.c_str()<< "\t" << std::endl;
 
         bool error = (reply_->type == REDIS_REPLY_ERROR);
         freeReplyObject(reply_);

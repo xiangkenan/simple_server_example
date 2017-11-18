@@ -33,7 +33,7 @@ class Redpacket {
             Status status;
             status = stub_->addRedpacket(&context, request, response);
 
-            cout << response->code() << ":" << response->msg() << ":" << response->packet_id() << ":" << response->is_repeat() << endl;
+            //cout << response->code() << ":" << response->msg() << ":" << response->packet_id() << ":" << response->is_repeat() << endl;
             return true;
         }
 

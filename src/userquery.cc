@@ -66,7 +66,7 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     //LOG(INFO) << write_ms_log(start_time, "cost:规则成功");
 
     //发短信
-    SendMessage(&kafka_data, &redis_user_trigger_config);
+    //SendMessage(&kafka_data, &redis_user_trigger_config);
     //LOG(INFO) << write_ms_log(start_time, "cost:发送短信");
 
     log_str = kafka_data.log_str;
@@ -351,7 +351,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             continue;
         }
 
-        cout << all_config << endl;
+        //cout << all_config << endl;
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
@@ -628,6 +628,20 @@ bool UserQuery::LoadInitialRangeData() {
 
 //获取用户uid,action
 bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver_message, KafkaData* kafka_data) {
+    string behaver_message_new;
+    for (size_t i = 0; i < behaver_message.length(); i++) {
+        if ((i == 0 || i == behaver_message.length()-1) && behaver_message[i] == '\"') {
+            continue;
+        }
+        if (behaver_message[i] == '\\') {
+            if (i+1 < behaver_message.length() && behaver_message[i+1] == '\"') {
+                continue;
+            }
+        }
+        behaver_message_new.append(1, behaver_message[i]);
+    }
+    behaver_message = behaver_message_new;
+    
     if (lasso_config_map.size() == 0) {
         return false;
     }
@@ -640,7 +654,7 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
     }
 
     kafka_data->user_behaviour_date =  behaver_message.substr(behaver_message.find("INFO ")+5, 19);
-    string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6, string::npos);
+    string json_behaver_message = behaver_message.substr(behaver_message.find("body\":")+6);
     json_behaver_message[json_behaver_message.size()-1] = '\0';
     reader.parse(json_behaver_message.c_str(), user_json);
     for (unsigned int i =0; i < user_json["content"].size(); ++i) {

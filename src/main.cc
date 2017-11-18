@@ -2,8 +2,8 @@
 #include "ofo_crm.h"
 #include "queue.h"
 
-#define THREAD_COUNT 40
-#define RATIO 5
+#define THREAD_COUNT 45
+#define RATIO 1
 #define THREAD_QUEUE THREAD_COUNT*RATIO
 
 static void sigterm (int sig) {
@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
     for (int i = 0; i < THREAD_COUNT; ++i) {
         usleep(100);
         RunKafka run_kafka_fun(&ofo_crm, i, queue_kafka_vec[i], offset[i]);
- //       cout << "push:" << queue_kafka_vec[i] << endl;
         pthread_create(&id[i], NULL, run_kafka, (void *)&run_kafka_fun);
     }
 

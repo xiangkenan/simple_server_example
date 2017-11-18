@@ -97,13 +97,15 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
             //        static_cast<const char*>(message->payload()));
             //len = static_cast<int>(message->len());
             //kafka_consumer_->stop(topic_, partition_);  
+            //behaver_message = static_cast<const char*>(message->payload());
             behaver_message = static_cast<const char*>(message->payload());
-            struct timeval start_time;
-            gettimeofday(&start_time, NULL);
+            behaver_message = behaver_message.substr(0, message->len());
+            //cout << behaver_message << endl;
+            //struct timeval start_time;
+            //gettimeofday(&start_time, NULL);
             //处理kafka用户信息
             //user_query->Run(behaver_message, log_str);
             queue_kafka_->put_queue(behaver_message);
-            //cout << behaver_message << endl;
             //cout << write_ms_log(start_time, "cost:") << endl;
             //kafka_consumer_->start(topic_, partition_, offset_);
             //if (!log_str.empty()) {
