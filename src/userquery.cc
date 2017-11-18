@@ -239,8 +239,8 @@ bool UserQuery::HandleProcess(KafkaData *kafka_data) {
             BaseConfig cc = iter->second.base_config[i];
             //判断app触发条件是否满足
             if (cc.filter_id == "realtime.app.action") {
-                if ((cc.option_id == "app.action.appon" && kafka_data->action == "appscan") || 
-                        (cc.option_id == "app.action.scan" && kafka_data->action == "appstart")) {
+                if ((cc.option_id == "app.action.appon" && kafka_data->action != "appstart") || 
+                        (cc.option_id == "app.action.scan" && kafka_data->action != "appscan")) {
                     kafka_data->log_str += "&no app";
                     flag_hit = -1;
                     break;
@@ -251,8 +251,8 @@ bool UserQuery::HandleProcess(KafkaData *kafka_data) {
             }
             //判断订单行为触发是否满足
             if (cc.filter_id == "realtime.order.action") {
-                if ((cc.option_id == "order.action.start" && kafka_data->action == "eorder") || 
-                        (cc.option_id == "order.action.end" && kafka_data->action == "sorder")) {
+                if ((cc.option_id == "order.action.start" && kafka_data->action != "sorder") || 
+                        (cc.option_id == "order.action.end" && kafka_data->action != "eorder")) {
                     kafka_data->log_str += "&no order_action";
                     flag_hit = -1;
                     break;
