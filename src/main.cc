@@ -3,7 +3,7 @@
 #include "queue.h"
 
 #define THREAD_COUNT 45
-#define RATIO 1
+#define RATIO 5
 #define THREAD_QUEUE THREAD_COUNT*RATIO
 
 static void sigterm (int sig) {
