@@ -66,7 +66,7 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     //LOG(INFO) << write_ms_log(start_time, "cost:规则成功");
 
     //发短信
-    //SendMessage(&kafka_data, &redis_user_trigger_config);
+    SendMessage(&kafka_data, &redis_user_trigger_config);
     //LOG(INFO) << write_ms_log(start_time, "cost:发送短信");
 
     log_str = kafka_data.log_str;
@@ -717,12 +717,12 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
         }
 
         //白名单过滤
-        string white_user;
-        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        if (white_user != "crm_write") {
-            return false;
-        }
-        LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
+        //string white_user;
+        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        //if (white_user != "crm_write") {
+        //    return false;
+        //}
+        //LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
 
         //测试
         //kafka_data->uid = "81002550";
