@@ -351,7 +351,7 @@ void UserQuery::parse_noah_config(const unordered_map<string, string>& all_json)
             continue;
         }
 
-        //cout << all_config << endl;
+        cout << all_config << endl;
         lasso_config = all_config["filters_list"];
         offline_config = all_config["jobArray"][0]["filters_list"];
 
@@ -675,6 +675,12 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             continue;
         }
 
+        if (kafka_data->action == "appstart" || kafka_data->action == "appscan") {
+            user_id_md5 = "user_info_" + user_id_md5;
+        } else {
+            user_id_md5 = "info_user_" + user_id_md5;
+        }
+
         //连接解密userid redis
         Redis redis_userid;
         if (!GetQconfRedis(&redis_userid, "/Dba/redis/prc/online/ofo_userbase/connection")) {
@@ -682,12 +688,12 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             return false;
         }
 
-        redis_userid.HGet("user_info_"+user_id_md5, "userid", &(kafka_data->uid));
+        redis_userid.HGet(user_id_md5, "userid", &(kafka_data->uid));
         if(kafka_data->uid.empty()) {
             continue;
         }
 
-        redis_userid.HGet("user_info_"+user_id_md5, "telephone", &(kafka_data->tel));
+        redis_userid.HGet(user_id_md5, "telephone", &(kafka_data->tel));
         if(kafka_data->tel.empty()) {
             continue;
         }
@@ -697,17 +703,16 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
         }
 
         //白名单过滤
-        //string white_user;
-        //redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
-        //if (white_user != "crm_write") {
-        //    return false;
-        //}
-        //LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
+        string white_user;
+        redis_user_trigger_config->HGet("crm_write_list", kafka_data->tel, &white_user);
+        if (white_user != "crm_write") {
+            return false;
+        }
+        LOG(INFO) << "白名单用户：" << kafka_data->uid << ":" << kafka_data->tel << ":" << kafka_data->action;
 
         //测试
         //kafka_data->uid = "81002550";
         //kafka_data->tel = "18211097924";
-        cout << kafka_data->uid << ":" << kafka_data->tel << endl;
 
         //获取用户离线数据
         string user_offline_data;
