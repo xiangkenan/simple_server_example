@@ -662,9 +662,9 @@ bool UserQuery::Parse_kafka_data(Redis* redis_user_trigger_config,string behaver
             kafka_data->action = "appstart";
         } else if (user_json["content"][i]["action"].asString() == "HomepageClick_ofo_00010" && user_json["content"][i]["params"]["more"]["click"].asString() == "StartButton") {
             kafka_data->action = "appscan";
-        } else if ("content"[i]["action"].asString() == "sorder") {
+        } else if (user_json["content"][i]["action"].asString() == "sorder") {
             kafka_data->action = "sorder";
-        } else if ("content"[i]["action"].asString() == "eorder") {
+        } else if (user_json["content"][i]["action"].asString() == "eorder") {
             kafka_data->action = "eorder";
         } else {
             continue;
