@@ -1,5 +1,5 @@
-update_increment_hour_time=19
-dump_time_hour=19
+update_increment_hour_time=01
+dump_time_hour=01
 switch_dump=no
 switch_update=no
 user_touch=no
