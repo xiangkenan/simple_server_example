@@ -5,6 +5,9 @@ using namespace std;
 extern void * parallel_load_config(void*);
 
 UserQuery::UserQuery() {
+    switch_dump = "no";
+    switch_update = "no";
+    user_touch = "no";
     redpacket = new Redpacket(grpc::CreateChannel(
         "10.6.0.180:2500", grpc::InsecureChannelCredentials()));
     run_ = false;
@@ -66,7 +69,9 @@ bool UserQuery::Run(const string& behaver_message, string& log_str) {
     //LOG(INFO) << write_ms_log(start_time, "cost:规则成功");
 
     //发短信
-    SendMessage(&kafka_data, &redis_user_trigger_config);
+    if (user_touch == "no") {
+        SendMessage(&kafka_data, &redis_user_trigger_config);
+    }
     //LOG(INFO) << write_ms_log(start_time, "cost:发送短信");
 
     log_str = kafka_data.log_str;
@@ -546,6 +551,8 @@ bool UserQuery::InitConf(string conf_file) {
             switch_update = line_vec[1];
         } else if (line_vec[0] == "switch_dump") {
             switch_dump = line_vec[1];
+        } else if (line_vec[0] == "user_touch") {
+            user_touch = line_vec[1];
         } else {
             LOG(ERROR) << "unknown field in conf file!!";
             return false;

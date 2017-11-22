@@ -105,10 +105,7 @@ void kafka_consumer_client::consumer(RdKafka::Message *message, void *opt, UserQ
             //gettimeofday(&start_time, NULL);
             //处理kafka用户信息
             //user_query->Run(behaver_message, log_str);
-            //当锁定是后，直接丢弃数据
-            if (user_query->run_) {
-                queue_kafka_->put_queue(behaver_message);
-            }
+            queue_kafka_->put_queue(behaver_message);
             //cout << write_ms_log(start_time, "cost:") << endl;
             //kafka_consumer_->start(topic_, partition_, offset_);
             //if (!log_str.empty()) {
@@ -136,18 +133,18 @@ bool kafka_consumer_client::consume(int timeout_ms, UserQuery *user_query, int i
     RdKafka::Message *msg = nullptr;
 
     while(run_){
-        //while (!user_query->run_){
-        //    ofstream ofile;
-        //    ofile.open("./conf/offset/offset_" + to_string(i) + ".txt");
-        //    if (last_offset_ == 0) {
-        //        ofile << "-1";
-        //    } else {
-        //        ofile << last_offset_;
-        //    }
-        //    ofile.close();
+        while (!user_query->run_){
+            ofstream ofile;
+            ofile.open("./conf/offset/offset_" + to_string(i) + ".txt");
+            if (last_offset_ == 0) {
+                ofile << "-1";
+            } else {
+                ofile << last_offset_;
+            }
+            ofile.close();
 
-        //    sleep(2);
-        //}
+            sleep(2);
+        }
         msg = kafka_consumer_->consume(topic_, partition_, timeout_ms);
 
         consumer(msg, nullptr, user_query);

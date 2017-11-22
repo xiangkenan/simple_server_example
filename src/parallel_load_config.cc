@@ -8,7 +8,7 @@ void* parallel_load_config(void* arg) {
     ParallelLoadConfig& parallel_conf = *(ParallelLoadConfig*)arg;
 
     unordered_map<long, vector<TimeRange>> base_vec;
-    if (!LoadRangeOriginConfig("./data/"+parallel_conf.file_name+".txt", &base_vec)) {
+    if (!LoadRangeOriginConfig("./data/"+parallel_conf.file_name+".txt", &base_vec, 1)) {
         pthread_mutex_lock(&(parallel_conf.mutex));
         ofstream ofile;
         ofile.open("conf/parallel_load_config.txt", ios::app);

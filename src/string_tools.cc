@@ -28,11 +28,11 @@ int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone) {
     return 0;
 }
 
-
-string get_now_date() {
+string get_now_date(int sec) {
     time_t timep;
     struct tm p;
     time(&timep);
+    timep += sec;
     FastSecondToDate(timep, &p, 8);
     string date_now = get_year_mon_day_format(to_string(p.tm_year+1900) , to_string(p.tm_mon+1), to_string(p.tm_mday));
     return date_now;
@@ -198,9 +198,11 @@ bool DumpFile(const string& file_name, const unordered_map<long, vector<TimeRang
     return true;
 }
 
-//flag:0 加载最初配置
-//flag:1 更行每天增量
-bool LoadRangeOriginConfig(string time_range_file, unordered_map<long, vector<TimeRange>>* time_range_origin) {
+/*
+ flag = 0 正常引入
+ flag = 1 不排序，不累加，直接加载上次dump的文件
+ * */
+bool LoadRangeOriginConfig(string time_range_file, unordered_map<long, vector<TimeRange>>* time_range_origin, int flag) {
     ifstream fin(time_range_file);
     if (!fin) {
         LOG(ERROR) << "load "<< time_range_file << " failed!!";
@@ -234,12 +236,15 @@ bool LoadRangeOriginConfig(string time_range_file, unordered_map<long, vector<Ti
         if (time_range_vec.empty())
             continue;
 
-        sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
+        if (flag != 1) {
+            sort(time_range_vec.begin(), time_range_vec.end(), time_rang_cmp);
+        }
 
-        //if ((*time_range_origin).count(line_vec[0]) <= 0) {
         if (time_range_origin->find(atol(line_vec[0].c_str())) == time_range_origin->end()) {
-            for (size_t i = 1; i < time_range_vec.size(); ++i) {
-                time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
+            if (flag != 1) {
+                for (size_t i = 1; i < time_range_vec.size(); ++i) {
+                    time_range_vec[i].num = time_range_vec[i].num + time_range_vec[i-1].num;
+                }
             }
 
             time_range_origin->insert(make_pair(atol(line_vec[0].c_str()), time_range_vec));
@@ -274,6 +279,17 @@ void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_r
         } else {
             (*time_range_vec)[i].num += (*time_range_vec_last)[time_range_vec_last->size()-1].num;
             time_range_vec_last->push_back((*time_range_vec)[i]);
+        }
+    }
+
+    string date_2_month = get_now_date(-60*86400);
+    LOG(INFO) << "获取2月前的时间：" << date_2_month;
+    vector<TimeRange>::iterator iter = (*time_range_vec_last).begin();
+    while(iter != (*time_range_vec_last).end()) {
+        if (iter->date < atoi(date_2_month.c_str())) {
+            iter = (*time_range_vec_last).erase(iter);
+        }else{
+            break;
         }
     }
 }

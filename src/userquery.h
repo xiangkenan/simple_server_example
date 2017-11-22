@@ -70,6 +70,7 @@ class UserQuery {
         //是否强行dump 和 update开关
         std::string switch_update;
         std::string switch_dump;
+        std::string user_touch;
         
         //发红包grpc
         Redpacket *redpacket;
