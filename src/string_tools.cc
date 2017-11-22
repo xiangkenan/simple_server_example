@@ -283,7 +283,6 @@ void merge_vec(vector<TimeRange>* time_range_vec_last, vector<TimeRange>* time_r
     }
 
     string date_2_month = get_now_date(-60*86400);
-    LOG(INFO) << "获取2月前的时间：" << date_2_month;
     vector<TimeRange>::iterator iter = (*time_range_vec_last).begin();
     while(iter != (*time_range_vec_last).end()) {
         if (iter->date < atoi(date_2_month.c_str())) {
