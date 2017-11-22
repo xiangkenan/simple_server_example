@@ -7,7 +7,6 @@ RootDir=$PWD
 export LD_LIBRARY_PATH=/usr/local/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/qconf/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RootDir/lib/librdkafka/lib
-echo $LD_LIBRARY_PATH
 rm ./conf/offset/* -fr
 proc="./crm_noah_online"
 ulimit -c unlimited
